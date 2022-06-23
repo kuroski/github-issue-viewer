@@ -1,0 +1,24 @@
+version: "3.9"
+
+services:
+  db:
+    image: mysql:oracle
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_PASSWORD: secret
+      MYSQL_DATABASE: nextProjectTemplate
+    volumes:
+      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init-script.sql
+      - mysql:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    networks:
+      - mysql
+
+networks:
+  mysql:
+    driver: bridge
+
+volumes:
+  mysql:

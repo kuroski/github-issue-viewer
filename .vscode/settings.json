@@ -1,0 +1,11 @@
+{
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true,
+    "editor.action.formatDocument": true
+  },
+  "css.lint.unknownAtRules": "ignore"
+}

@@ -1,0 +1,8 @@
+{
+  "login": "Login",
+  "logout": "Logout",
+  "home_page": "Home",
+  "no_permission": "You don't have permission to access this content",
+  "back_to_home": "Back to the homepage",
+  "switch_to_mode": "Switch to mode"
+}

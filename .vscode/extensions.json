@@ -1,0 +1,12 @@
+{
+  "recommendations": [
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
+    "timonvs.reactsnippetsstandard",
+    "spadin.config-defaults",
+    "EditorConfig.EditorConfig",
+    "codezombiech.gitignore",
+    "foxundermoon.next-js",
+    "mikestead.dotenv"
+  ]
+}
