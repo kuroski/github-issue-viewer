@@ -7,7 +7,7 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: secret
       MYSQL_PASSWORD: secret
-      MYSQL_DATABASE: nextProjectTemplate
+      MYSQL_DATABASE: githubIssueViewer
     volumes:
       - ./scripts/init.sql:/docker-entrypoint-initdb.d/init-script.sql
       - mysql:/var/lib/mysql

@@ -21,7 +21,7 @@ type AppPropsWithAuth = AppProps & {
 
 function MyApp({ Component, pageProps }: AppPropsWithAuth) {
   return (
-    <SessionProvider session={pageProps.session}>
+    <SessionProvider session={pageProps.session} refetchOnWindowFocus={false}>
       <ChakraProvider>
         {Component.auth ? (
           <Auth

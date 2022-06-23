@@ -13,13 +13,27 @@ import {
 import { Link1Icon } from "@radix-ui/react-icons";
 import type { NextPage } from "next";
 import NextLink from "next/link";
+import { useSession } from "next-auth/react";
 
 import HelloForm from "@/components/HelloForm";
 import DefaultLayout from "@/layouts/DefaultLayout";
 import { trpc } from "@/lib/trpc";
 
+type IssuesListProps = {};
+
+const IssuesList = (props: IssuesListProps) => {
+  const issues = trpc.useQuery(["github.issues.list"]);
+
+  return (
+    <div>
+      <pre>{JSON.stringify(issues, null, 4)}</pre>
+    </div>
+  );
+};
+
 const Home: NextPage = () => {
   const toast = useToast();
+  const { data: session } = useSession();
   const pong = trpc.useQuery(["health.ping"], {
     refetchOnWindowFocus: false,
     onError: (err) => {
@@ -81,6 +95,8 @@ const Home: NextPage = () => {
             <Spinner />
           </Center>
         ))}
+
+      {session?.user && <IssuesList />}
 
       <Box mt="6">
         <HelloForm
