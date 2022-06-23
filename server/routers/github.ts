@@ -1,4 +1,5 @@
 import * as trpc from "@trpc/server";
+import { Octokit } from "octokit";
 
 import octokit from "@/lib/octokit";
 import prisma from "@/lib/prisma";
@@ -20,26 +21,7 @@ const githubRoute = createProtectedRouter().query("issues.list", {
       });
     }
 
-    // return octokit(account.access_token).request("GET /user/repos", {});
-    return octokit(account.access_token).graphql(`
-    {
-      viewer {
-        repositories(first: 100, affiliations: [OWNER, ORGANIZATION_MEMBER, COLLABORATOR], ownerAffiliations: [OWNER, ORGANIZATION_MEMBER, COLLABORATOR]) {
-          nodes {
-            name
-            url
-            isPrivate
-            owner {
-              login
-            }
-            defaultBranchRef {
-              name
-            }
-          }
-        }
-      }
-    }
-    `);
+    return octokit(account.access_token).issues();
   },
 });
 
