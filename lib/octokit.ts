@@ -1,6 +1,6 @@
 import { Octokit } from "octokit";
 
-import { issueDecoder } from "@/lib/decoders/issue";
+import { issuesDecoder } from "@/lib/decoders/issue";
 
 export function repositories(octokit: Octokit) {
   return octokit.graphql(`
@@ -57,7 +57,7 @@ export function issues(octokit: Octokit) {
   `,
         {}
       )
-      .then(issueDecoder.parse);
+      .then(issuesDecoder.parse);
 }
 
 function bootstrap(token: string) {
