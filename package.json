@@ -26,6 +26,7 @@
     "@trpc/next": "^9.25.3",
     "@trpc/react": "^9.25.3",
     "@trpc/server": "^9.25.3",
+    "camelcase-keys": "^8.0.1",
     "csstype": "^3.0.10",
     "envsafe": "^2.0.3",
     "fp-ts": "^2.12.1",

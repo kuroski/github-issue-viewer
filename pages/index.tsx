@@ -50,21 +50,31 @@ const columns = [
       />
     ),
   }),
-  table.createDataColumn((row) => row.titleHTML, {
-    id: "cell",
-    header: () => <div>Filters will appear here!</div>,
-    cell: (info) => info.getValue(),
-  }),
+  table.createDataColumn(
+    (row) => (
+      <div>
+        {row.title} - {row.htmlUrl}
+      </div>
+    ),
+    {
+      id: "cell",
+      header: () => <div>Filters will appear here!</div>,
+      cell: (info) => info.getValue(),
+    }
+  ),
 ];
 
 type IssuesListProps = {};
 
 const IssuesList = (props: IssuesListProps) => {
   const [rowSelection, setRowSelection] = useState({});
-  const issues = trpc.useQuery(["github.issues.list"]);
+  const issues = trpc.useQuery(["github.issues.list"], {
+    refetchOnWindowFocus: false,
+    retry: 0,
+  });
 
   const instance = useTableInstance(table, {
-    data: issues.data?.nodes ?? [],
+    data: issues.data ?? [],
     columns,
     state: {
       rowSelection,

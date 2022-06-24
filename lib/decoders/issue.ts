@@ -1,45 +1,78 @@
+import camelcaseKeys from "camelcase-keys";
 import { z } from "zod";
 
-export const issueDecoder = z.union([
-  z.object({
-    url: z.string(),
-    titleHTML: z.string(),
-    bodyHTML: z.string(),
-    number: z.number(),
-    labels: z.object({ nodes: z.array(z.unknown()) }),
-  }),
-  z.object({
-    url: z.string(),
-    titleHTML: z.string(),
-    bodyHTML: z.string(),
-    number: z.number(),
-    labels: z.object({
-      nodes: z.array(
-        z.object({
-          url: z.string(),
-          color: z.string(),
-          name: z.string(),
-        })
-      ),
-    }),
-  }),
-]);
-export type IssueDecoder = z.TypeOf<typeof issueDecoder>;
-
-export const issuesDecoder = z
+export const issueDecoder = z
   .object({
-    viewer: z.object({
-      issues: z.object({
-        pageInfo: z.object({
-          startCursor: z.string(),
-          hasNextPage: z.boolean(),
-          endCursor: z.string(),
-        }),
-        totalCount: z.number(),
-        nodes: z.array(issueDecoder),
-      }),
+    id: z.number(),
+    url: z.string(),
+    repository_url: z.string(),
+    labels_url: z.string(),
+    comments_url: z.string(),
+    html_url: z.string(),
+    number: z.number(),
+    state: z.string(),
+    title: z.string(),
+    body: z.string().nullish(),
+    user: z.object({
+      login: z.string(),
+      id: z.number(),
+      avatar_url: z.string(),
+      url: z.string(),
+      html_url: z.string(),
+    }),
+    labels: z.array(
+      z.object({
+        id: z.number(),
+        node_id: z.string(),
+        url: z.string(),
+        name: z.string(),
+        description: z.string(),
+        color: z.string(),
+        default: z.boolean(),
+      })
+    ),
+    assignee: z.object({
+      login: z.string(),
+      id: z.number(),
+      avatar_url: z.string(),
+      gravatar_id: z.string(),
+      url: z.string(),
+      html_url: z.string(),
+    }),
+    assignees: z.array(
+      z.object({
+        login: z.string(),
+        id: z.number(),
+        avatar_url: z.string(),
+        gravatar_id: z.string(),
+        url: z.string(),
+        html_url: z.string(),
+      })
+    ),
+    locked: z.boolean(),
+    comments: z.number(),
+    pull_request: z
+      .object({
+        url: z.string(),
+        html_url: z.string(),
+        diff_url: z.string(),
+        patch_url: z.string(),
+      })
+      .nullish(),
+    closed_at: z.string().nullish(),
+    created_at: z.string(),
+    updated_at: z.string(),
+    repository: z.object({
+      id: z.number(),
+      name: z.string(),
+      full_name: z.string(),
     }),
   })
-  .transform(({ viewer }) => viewer.issues);
+  .transform((issue) => camelcaseKeys(issue, { deep: true }));
+export type IssueDecoder = z.TypeOf<typeof issueDecoder>;
 
-export type IssuesDecoder = z.TypeOf<typeof issuesDecoder>;
+export const issuesResponseDecoder = z
+  .object({
+    data: z.array(issueDecoder),
+  })
+  .transform(({ data }) => data);

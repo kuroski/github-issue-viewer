@@ -1,63 +1,27 @@
 import { Octokit } from "octokit";
 
-import { issuesDecoder } from "@/lib/decoders/issue";
-
-export function repositories(octokit: Octokit) {
-  return octokit.graphql(`
-  {
-    viewer {
-      repositories(first: 100, affiliations: [OWNER, ORGANIZATION_MEMBER, COLLABORATOR], ownerAffiliations: [OWNER, ORGANIZATION_MEMBER, COLLABORATOR]) {
-        nodes {
-          name
-          url
-          isPrivate
-          owner {
-            login
-          }
-          defaultBranchRef {
-            name
-          }
-        }
-      }
-    }
-  }
-  `);
-}
+import { issuesResponseDecoder } from "@/lib/decoders/issue";
 
 export function issues(octokit: Octokit) {
-  return (after?: string) =>
-    octokit
-      .graphql(
-        `
-    {
-    viewer {
-      issues(first: 100) {
-        pageInfo {
-          startCursor
-          hasNextPage
-          endCursor
-        }
-        totalCount
-        nodes {
-          url
-          titleHTML
-          bodyHTML
-          number
-          labels(first: 50) {
-            nodes {
-              url
-              color
-              name
-            }
-          }
-        }
-      }
-    }
-  }
-  `,
-        {}
-      )
-      .then(issuesDecoder.parse);
+  return (options?: { pagination?: number }) =>
+    octokit.rest.issues
+      .list({
+        orgs: true,
+        owned: true,
+        per_page: 100,
+        pulls: true,
+        collab: true,
+        state: "all",
+      })
+      // .listForAuthenticatedUser({
+      //   per_page: 100,
+
+      // })
+      .then(issuesResponseDecoder.parse)
+      .catch((e) => {
+        console.log(e);
+        return Promise.reject(e);
+      });
 }
 
 function bootstrap(token: string) {
@@ -66,7 +30,6 @@ function bootstrap(token: string) {
   });
   return {
     octokit,
-    repositories: () => repositories(octokit),
     issues: issues(octokit),
   };
 }
