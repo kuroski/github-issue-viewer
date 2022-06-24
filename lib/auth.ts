@@ -12,6 +12,11 @@ const authOptions: NextAuthOptions = {
     GithubProvider({
       clientId: serverEnv.GITHUB_ID,
       clientSecret: serverEnv.GITHUB_SECRET,
+      authorization: {
+        params: {
+          scope: "read:user,user:email,repo",
+        },
+      },
     }),
   ],
   callbacks: {
