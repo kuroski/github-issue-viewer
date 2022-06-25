@@ -1,11 +1,20 @@
-import camelcaseKeys from "camelcase-keys";
+import camelcaseKeys, { CamelCaseKeys } from "camelcase-keys";
 import { z } from "zod";
 
 import { dateFrom, isISODate } from "@/lib/utils";
 
-export const stateDecoder = z.union([z.literal("open"), z.literal("closed")]);
-
+const stateDecoder = z.union([z.literal("open"), z.literal("closed")]);
 export type State = z.TypeOf<typeof stateDecoder>;
+
+const userDecoder = z.object({
+  login: z.string(),
+  id: z.number(),
+  avatar_url: z.string().url(),
+  gravatar_id: z.string(),
+  url: z.string().url(),
+  html_url: z.string().url(),
+})
+export type User = CamelCaseKeys<z.TypeOf<typeof userDecoder>>
 
 const isoDateDecoder = z
   .string()
@@ -22,6 +31,7 @@ export const issueDecoder = z
     state: stateDecoder,
     title: z.string(),
     body: z.string().nullish(),
+    user: userDecoder,
     labels: z.array(
       z.object({
         id: z.number(),
@@ -32,14 +42,7 @@ export const issueDecoder = z
       })
     ),
     assignees: z.array(
-      z.object({
-        login: z.string(),
-        id: z.number(),
-        avatar_url: z.string().url(),
-        gravatar_id: z.string(),
-        url: z.string().url(),
-        html_url: z.string().url(),
-      })
+      userDecoder
     ),
     comments: z.number(),
     pull_request: z

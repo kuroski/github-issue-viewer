@@ -1,5 +1,4 @@
 import * as trpc from "@trpc/server";
-import { Octokit } from "octokit";
 
 import octokit from "@/lib/octokit";
 import prisma from "@/lib/prisma";

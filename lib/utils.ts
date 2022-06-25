@@ -37,3 +37,5 @@ export const isISODate = (str: string) => {
 };
 
 export const dateFrom = (str: string) => new Date(str);
+
+export const dateTimeFormat = (options: Intl.DateTimeFormatOptions = {}) => Intl.DateTimeFormat([], options)

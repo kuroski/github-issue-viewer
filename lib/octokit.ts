@@ -9,7 +9,7 @@ export function issues(octokit: Octokit) {
         orgs: true,
         owned: true,
         per_page: 100,
-        pulls: true,
+        pulls: false,
         collab: true,
         state: "all",
         ...options,
