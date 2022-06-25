@@ -59,6 +59,7 @@ export const issueDecoder = z
       html_url: z.string().url(),
       private: z.boolean(),
     }),
+    timeline_url: z.string().url(),
   })
   .transform((issue) => camelcaseKeys(issue, { deep: true }));
 export type IssueDecoder = z.TypeOf<typeof issueDecoder>;
