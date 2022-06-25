@@ -4,6 +4,7 @@ import NextLink from "next/link";
 import Trans from "next-translate/Trans";
 import useTranslation from "next-translate/useTranslation";
 
+import OpenIcon from "@/components/OpenIcon";
 import TooltipAvatar from "@/components/TooltipAvatar";
 import UserLink from "@/components/UserLink";
 import { IssueDecoder } from "@/lib/decoders/issue";
@@ -61,15 +62,7 @@ const IssueRow = (props: IssueRowProps) => {
       <>
         {props.issue.state === "open" && (
           <Tooltip label={t('open_issue')} openDelay={500}>
-            <Box position="relative" color="green.500" alignSelf="flex-start">
-              <CircleIcon width="24" height="24" />
-              <DotFilledIcon style={{
-                position: "absolute",
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%, -50%)",
-              }} width="16" height="16" />
-            </Box>
+            <OpenIcon />
           </Tooltip>
         )}
         {props.issue.state === "closed" && (
