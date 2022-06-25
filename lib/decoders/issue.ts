@@ -1,75 +1,63 @@
 import camelcaseKeys from "camelcase-keys";
 import { z } from "zod";
 
+import { dateFrom, isISODate } from "@/lib/utils";
+
 export const stateDecoder = z.union([z.literal("open"), z.literal("closed")]);
 
 export type State = z.TypeOf<typeof stateDecoder>;
 
+const isoDateDecoder = z
+  .string()
+  .refine(isISODate, { message: "Not a valid ISO string date " })
+  .transform(dateFrom);
+
 export const issueDecoder = z
   .object({
     id: z.number(),
-    url: z.string(),
-    repository_url: z.string(),
-    labels_url: z.string(),
-    comments_url: z.string(),
-    html_url: z.string(),
+    html_url: z.string().url(),
+    url: z.string().url(),
+    repository_url: z.string().url(),
     number: z.number(),
     state: stateDecoder,
     title: z.string(),
     body: z.string().nullish(),
-    user: z.object({
-      login: z.string(),
-      id: z.number(),
-      avatar_url: z.string(),
-      url: z.string(),
-      html_url: z.string(),
-    }),
     labels: z.array(
       z.object({
         id: z.number(),
-        node_id: z.string(),
-        url: z.string(),
+        url: z.string().url(),
         name: z.string(),
         description: z.string(),
         color: z.string(),
-        default: z.boolean(),
       })
     ),
-    assignee: z.object({
-      login: z.string(),
-      id: z.number(),
-      avatar_url: z.string(),
-      gravatar_id: z.string(),
-      url: z.string(),
-      html_url: z.string(),
-    }),
     assignees: z.array(
       z.object({
         login: z.string(),
         id: z.number(),
-        avatar_url: z.string(),
+        avatar_url: z.string().url(),
         gravatar_id: z.string(),
-        url: z.string(),
-        html_url: z.string(),
+        url: z.string().url(),
+        html_url: z.string().url(),
       })
     ),
-    locked: z.boolean(),
     comments: z.number(),
     pull_request: z
       .object({
-        url: z.string(),
-        html_url: z.string(),
-        diff_url: z.string(),
-        patch_url: z.string(),
+        url: z.string().url(),
+        html_url: z.string().url(),
       })
       .nullish(),
-    closed_at: z.string().nullish(),
-    created_at: z.string(),
-    updated_at: z.string(),
+    closed_at: isoDateDecoder.nullish(),
+    created_at: isoDateDecoder,
+    updated_at: isoDateDecoder,
     repository: z.object({
       id: z.number(),
       name: z.string(),
       full_name: z.string(),
+      description: z.string().nullish(),
+      html_url: z.string().url(),
+      private: z.boolean(),
     }),
   })
   .transform((issue) => camelcaseKeys(issue, { deep: true }));
