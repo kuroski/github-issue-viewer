@@ -1,6 +1,10 @@
 import camelcaseKeys from "camelcase-keys";
 import { z } from "zod";
 
+export const stateDecoder = z.union([z.literal("open"), z.literal("closed")]);
+
+export type State = z.TypeOf<typeof stateDecoder>;
+
 export const issueDecoder = z
   .object({
     id: z.number(),
@@ -10,7 +14,7 @@ export const issueDecoder = z
     comments_url: z.string(),
     html_url: z.string(),
     number: z.number(),
-    state: z.string(),
+    state: stateDecoder,
     title: z.string(),
     body: z.string().nullish(),
     user: z.object({

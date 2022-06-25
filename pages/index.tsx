@@ -1,8 +1,13 @@
 import {
   Alert,
   AlertIcon,
+  Box,
   Center,
   Checkbox,
+  ColorProps,
+  Flex,
+  Heading,
+  Link,
   Spinner,
   Table,
   TableContainer,
@@ -13,17 +18,19 @@ import {
   Tr,
   useToast,
 } from "@chakra-ui/react";
+import { CheckCircledIcon, Link1Icon } from "@radix-ui/react-icons";
 import {
   createTable,
   getCoreRowModel,
   useTableInstance,
 } from "@tanstack/react-table";
 import type { NextPage } from "next";
+import NextLink from "next/link";
 import { useSession } from "next-auth/react";
 import { useState } from "react";
 
 import DefaultLayout from "@/layouts/DefaultLayout";
-import { IssueDecoder } from "@/lib/decoders/issue";
+import { IssueDecoder, State } from "@/lib/decoders/issue";
 import { trpc } from "@/lib/trpc";
 
 const table = createTable().setRowType<IssueDecoder>();
@@ -51,11 +58,28 @@ const columns = [
     ),
   }),
   table.createDataColumn(
-    (row) => (
-      <div>
-        {row.title} - {row.htmlUrl}
-      </div>
-    ),
+    (row) => {
+      const stateColor: ColorProps["color"] =
+        row.state === "open" ? "green.500" : "purple.500";
+      return (
+        <Flex alignItems="center" gap="2">
+          <>
+            <Box color={stateColor}>
+              <CheckCircledIcon />
+            </Box>
+            <Heading as="h3" size="sm" flex="1">
+              <NextLink href={{ pathname: "/issues/:id" }} passHref>
+                <Link>{row.title}</Link>
+              </NextLink>
+            </Heading>
+
+            <Link href={row.url} target="_blank">
+              <Link1Icon />
+            </Link>
+          </>
+        </Flex>
+      );
+    },
     {
       id: "cell",
       header: () => <div>Filters will appear here!</div>,

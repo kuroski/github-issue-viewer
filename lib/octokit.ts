@@ -12,16 +12,9 @@ export function issues(octokit: Octokit) {
         pulls: true,
         collab: true,
         state: "all",
+        ...options,
       })
-      // .listForAuthenticatedUser({
-      //   per_page: 100,
-
-      // })
-      .then(issuesResponseDecoder.parse)
-      .catch((e) => {
-        console.log(e);
-        return Promise.reject(e);
-      });
+      .then(issuesResponseDecoder.parse);
 }
 
 function bootstrap(token: string) {
