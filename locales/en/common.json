@@ -6,5 +6,6 @@
   "back_to_home": "Back to the homepage",
   "switch_to_mode": "Switch to mode",
   "issue_subtitle_open": "#{{number}} opened on {{date}} by <0>{{user}}<0/>",
-  "issue_subtitle_close": "#{{number}} by <0>{{user}}</0> was closed on {{date}}"
+  "issue_subtitle_close": "#{{number}} by <0>{{user}}</0> was closed on {{date}}",
+  "profile": "Profile"
 }
