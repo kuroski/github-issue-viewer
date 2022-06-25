@@ -7,5 +7,8 @@
   "switch_to_mode": "Switch to mode",
   "issue_subtitle_open": "#{{number}} opened on {{date}} by <0>{{user}}<0/>",
   "issue_subtitle_close": "#{{number}} by <0>{{user}}</0> was closed on {{date}}",
-  "profile": "Profile"
+  "profile": "Profile",
+  "assigned_to": "Assigned to {{user}}",
+  "closed_issue": "Closed issue",
+  "open_issue": "Open issue"
 }
