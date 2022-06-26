@@ -1,14 +1,7 @@
 import {
   Alert,
-  AlertIcon,
-  Box,
-  Center,
-  Checkbox,
-  ColorProps,
-  Flex,
-  Heading,
-  Link,
-  Spinner,
+  AlertIcon, Center,
+  Checkbox, Spinner,
   Table,
   TableContainer,
   Tbody,
@@ -16,22 +9,19 @@ import {
   Th,
   Thead,
   Tr,
-  useToast,
 } from "@chakra-ui/react";
-import { CheckCircledIcon, Link1Icon } from "@radix-ui/react-icons";
 import {
   createTable,
   getCoreRowModel,
-  useTableInstance,
+  useTableInstance
 } from "@tanstack/react-table";
 import type { NextPage } from "next";
-import NextLink from "next/link";
 import { useSession } from "next-auth/react";
 import { useState } from "react";
 
 import IssueRow from "@/components/IssueRow";
 import DefaultLayout from "@/layouts/DefaultLayout";
-import { IssueDecoder, State } from "@/lib/decoders/issue";
+import { IssueDecoder } from "@/lib/decoders/issue";
 import { trpc } from "@/lib/trpc";
 
 const table = createTable().setRowType<IssueDecoder>();
@@ -133,7 +123,6 @@ const IssuesList = (props: IssuesListProps) => {
 };
 
 const Home: NextPage = () => {
-  const toast = useToast();
   const { data: session } = useSession();
 
   return <DefaultLayout>{session?.user && <IssuesList />}</DefaultLayout>;
