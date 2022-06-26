@@ -7,6 +7,7 @@ import { withTRPC } from "@trpc/next";
 import type { AppProps } from "next/app";
 import NextLink from "next/link";
 import { SessionProvider, signIn, useSession } from "next-auth/react";
+import { NextQueryParamProvider } from "next-query-params";
 import useTranslation from "next-translate/useTranslation";
 import React from "react";
 import { ReactQueryDevtools } from "react-query/devtools";
@@ -22,23 +23,25 @@ type AppPropsWithAuth = AppProps & {
 function MyApp({ Component, pageProps }: AppPropsWithAuth) {
   return (
     <SessionProvider session={pageProps.session} refetchOnWindowFocus={false}>
-      <ChakraProvider>
-        {Component.auth ? (
-          <Auth
-            {...(typeof Component.auth === "object"
-              ? { can: Component.auth.can }
-              : {})}
-          >
+      <NextQueryParamProvider>
+        <ChakraProvider>
+          {Component.auth ? (
+            <Auth
+              {...(typeof Component.auth === "object"
+                ? { can: Component.auth.can }
+                : {})}
+            >
+              <Component {...pageProps} />
+            </Auth>
+          ) : (
             <Component {...pageProps} />
-          </Auth>
-        ) : (
-          <Component {...pageProps} />
-        )}
+          )}
 
-        {process.env.NODE_ENV !== "production" && (
-          <ReactQueryDevtools initialIsOpen={false} />
-        )}
-      </ChakraProvider>
+          {process.env.NODE_ENV !== "production" && (
+            <ReactQueryDevtools initialIsOpen={false} />
+          )}
+        </ChakraProvider>
+      </NextQueryParamProvider>
     </SessionProvider>
   );
 }
