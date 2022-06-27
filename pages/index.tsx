@@ -68,7 +68,10 @@ const columns = [
         <ButtonGroup variant="ghost" colorScheme="gray.500" >
           <Button
             {...filters.state === 'open' ? { color: 'blue.500' } : {}}
-            onClick={() => instance.setGlobalFilter(() => ({ state: 'open' }))}
+            onClick={() => {
+              instance.resetRowSelection()
+              instance.setGlobalFilter(() => ({ state: 'open' }))
+            }}
           >
             <Flex alignItems="center" gap="2">
               <OpenIcon color="inherit" />
@@ -77,7 +80,10 @@ const columns = [
           </Button>
           <Button
             {...filters.state === 'closed' ? { color: 'blue.500' } : {}}
-            onClick={() => instance.setGlobalFilter(() => ({ state: 'closed' }))}
+            onClick={() => {
+              instance.resetRowSelection()
+              instance.setGlobalFilter(() => ({ state: 'closed' }))
+            }}
           >
             <Flex alignItems="center" gap="2">
               <CheckIcon width="24" height="24" />
