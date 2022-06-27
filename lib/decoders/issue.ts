@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { dateFrom, isISODate } from "@/lib/utils";
 
-export const stateDecoder = z.union([z.literal("open"), z.literal("closed")]);
+export const stateDecoder = z.union([z.literal("all"), z.literal("open"), z.literal("closed")]);
 export type State = z.TypeOf<typeof stateDecoder>;
 
 const userDecoder = z.object({

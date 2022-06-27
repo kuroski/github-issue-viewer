@@ -6,9 +6,9 @@ export function issues(octokit: Octokit) {
   return (options?: { pagination?: number }) =>
     octokit.rest.issues
       .list({
+        per_page: 100,
         orgs: true,
         owned: true,
-        per_page: 100,
         pulls: false,
         collab: true,
         state: "all",

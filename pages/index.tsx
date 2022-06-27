@@ -12,7 +12,6 @@ import {
 } from "@chakra-ui/react";
 import { CheckIcon } from "@radix-ui/react-icons";
 import {
-  ColumnFiltersState,
   createTable,
   getCoreRowModel,
   getFilteredRowModel,
@@ -21,40 +20,19 @@ import {
 import type { NextPage } from "next";
 import { useSession } from "next-auth/react";
 import { createEnumParam, useQueryParams, withDefault } from "next-query-params";
-import { useEffect, useState } from "react";
-import { z } from "zod";
+import React, { useEffect, useState } from "react";
 
 import IssueRow from "@/components/IssueRow";
 import OpenIcon from "@/components/OpenIcon";
 import DefaultLayout from "@/layouts/DefaultLayout";
 import { IssueDecoder, State, stateDecoder } from "@/lib/decoders/issue";
+import { IssueFilter, issueFilterDecoder, IssueMeta } from "@/lib/decoders/issueFilter";
 import { trpc } from "@/lib/trpc";
-
-// TYPING
-type Meta = {
-  info: {
-    closed: number;
-    open: number;
-  };
-}
-
-type Filter = {
-  state: State
-}
-
-function isFilter(filter: unknown): filter is Filter {
-  const decoder = z.object({
-    state: stateDecoder.nullish()
-  })
-  if (decoder.parse(filter)) return true
-  return false
-}
 
 // TABLE
 const table = createTable()
   .setRowType<IssueDecoder>()
-  .setFilterMetaType<Meta>()
-  .setTableMetaType<Meta>()
+  .setTableMetaType<IssueMeta>()
 
 const columns = [
   table.createDisplayColumn({
@@ -78,97 +56,81 @@ const columns = [
       />
     ),
   }),
-  table.createDataColumn(
-    (row) => <IssueRow issue={row} />,
-    {
-      id: "cell",
-      filterFn: (row, _columnId, value) => row.original?.state === value.state,
-      header: ({ instance, header, column }) => {
-        const { info } = instance.options.meta ?? {
-          info: {
-            open: 0,
-            closed: 0
-          }
-        }
-        const filter = column.getFilterValue()
-        if (!isFilter(filter)) throw new Error(`Your filter type is not supported, ${JSON.stringify(filter, null, 2)}`)
-        return (
-          <ButtonGroup variant="ghost" colorScheme="gray.500" >
-            <Button
-              {...filter.state === 'open' ? { color: 'blue.500' } : {}}
-              onClick={() => column.setFilterValue(() => ({ state: 'open' }))}
-            >
-              <Flex alignItems="center" gap="2">
-                <OpenIcon color="inherit" />
-                Open {info.open}
-              </Flex>
-            </Button>
-            <Button
-              {...filter.state === 'closed' ? { color: 'blue.500' } : {}}
-              onClick={() => column.setFilterValue(() => ({ state: 'closed' }))}
-            >
-              <Flex alignItems="center" gap="2">
-                <CheckIcon width="24" height="24" />
-                Closed {info.closed}
-              </Flex>
-            </Button>
-          </ButtonGroup >
-        )
-      },
-      cell: (info) => info.getValue(),
-    }
-  ),
+  table.createDataColumn((issue) => issue, {
+    id: 'cell',
+    header: ({ instance }) => {
+      const { openCount, closedCount } = instance.options.meta ?? {
+        openCount: 0,
+        closedCount: 0
+      }
+      const filters = issueFilterDecoder.parse(instance.getState().globalFilter)
+      return (
+        <ButtonGroup variant="ghost" colorScheme="gray.500" >
+          <Button
+            {...filters.state === 'open' ? { color: 'blue.500' } : {}}
+            onClick={() => instance.setGlobalFilter(() => ({ state: 'open' }))}
+          >
+            <Flex alignItems="center" gap="2">
+              <OpenIcon color="inherit" />
+              Open {openCount}
+            </Flex>
+          </Button>
+          <Button
+            {...filters.state === 'closed' ? { color: 'blue.500' } : {}}
+            onClick={() => instance.setGlobalFilter(() => ({ state: 'closed' }))}
+          >
+            <Flex alignItems="center" gap="2">
+              <CheckIcon width="24" height="24" />
+              Closed {closedCount}
+            </Flex>
+          </Button>
+        </ButtonGroup >
+      )
+    },
+    cell: info => <IssueRow issue={info.getValue()} />,
+  })
 ];
 
 // COMPONENT
-
-type IssuesListProps = {};
-
-const IssuesList = (props: IssuesListProps) => {
+const IssuesList = () => {
   const [rowSelection, setRowSelection] = useState({});
   const [query, setQuery] = useQueryParams({
-    state: withDefault(createEnumParam<State>(['open', 'closed']), 'open')
+    state: withDefault(createEnumParam<State>(['all', 'open', 'closed']), 'open')
   })
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([
-    {
-      id: 'cell',
-      value: {
-        state: query.state
-      }
-    }
-  ])
+  const [globalFilter, setGlobalFilter] = useState<IssueFilter>({
+    state: query.state || 'open'
+  })
 
-  const issues = trpc.useQuery(["github.issues.list"], {
+  const issues = trpc.useQuery(["github.issues.list", {
+    state: query.state
+  }], {
     refetchOnWindowFocus: false,
     retry: 0,
   });
 
-  const meta: Meta = {
-    info: {
-      closed: issues.data?.reduce((acc, issue) => issue.state === 'closed' ? acc + 1 : acc, 0) ?? 0,
-      open: issues.data?.reduce((acc, issue) => issue.state === 'open' ? acc + 1 : acc, 0) ?? 0
-    }
-  }
-
   const instance = useTableInstance(table, {
-    data: issues.data ?? [],
+    data: issues.data?.issues ?? [],
     columns,
     state: {
       rowSelection,
-      columnFilters,
+      globalFilter,
     },
-    onColumnFiltersChange: setColumnFilters,
+    onGlobalFilterChange: setGlobalFilter,
     onRowSelectionChange: setRowSelection,
+    manualFiltering: true,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    meta
+    meta: issues.data?.meta ?? {
+      closedCount: 0,
+      openCount: 0
+    }
   });
 
   useEffect(() => {
-    const filter = columnFilters[0]?.value
-    if (!filter || !isFilter(filter)) return
-    setQuery(filter)
-  }, [columnFilters])
+    setQuery({
+      state: globalFilter.state
+    })
+  }, [globalFilter])
 
   if (!issues.data)
     return (
@@ -188,30 +150,33 @@ const IssuesList = (props: IssuesListProps) => {
     );
 
   return (
-    <TableContainer>
-      <Table>
-        <Thead>
-          {instance.getHeaderGroups().map((headerGroup) => (
-            <Tr key={headerGroup.id}>
-              {headerGroup.headers.map((header) => (
-                <Th key={header.id} colSpan={header.colSpan}>
-                  {header.isPlaceholder ? null : header.renderHeader()}
-                </Th>
-              ))}
-            </Tr>
-          ))}
-        </Thead>
-        <Tbody>
-          {instance.getRowModel().rows.map((row) => (
-            <Tr key={row.id}>
-              {row.getVisibleCells().map((cell) => (
-                <Td key={cell.id}>{cell.renderCell()}</Td>
-              ))}
-            </Tr>
-          ))}
-        </Tbody>
-      </Table>
-    </TableContainer>
+    <Flex direction="column" mt="10">
+      <Button type="button" onClick={() => setGlobalFilter({ state: 'all' })} alignSelf="flex-end" variant="outline">Clear</Button>
+      <TableContainer>
+        <Table>
+          <Thead>
+            {instance.getHeaderGroups().map((headerGroup) => (
+              <Tr key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <Th key={header.id} colSpan={header.colSpan}>
+                    {header.isPlaceholder ? null : header.renderHeader()}
+                  </Th>
+                ))}
+              </Tr>
+            ))}
+          </Thead>
+          <Tbody>
+            {instance.getRowModel().rows.map((row) => (
+              <Tr key={row.id}>
+                {row.getVisibleCells().map((cell) => (
+                  <Td key={cell.id}>{cell.renderCell()}</Td>
+                ))}
+              </Tr>
+            ))}
+          </Tbody>
+        </Table>
+      </TableContainer>
+    </Flex>
   );
 };
 
