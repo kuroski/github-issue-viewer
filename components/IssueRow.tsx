@@ -57,6 +57,7 @@ type IssueRowProps = {
 
 const IssueRow = (props: IssueRowProps) => {
   const { t } = useTranslation('common')
+  const [orgName, repoName] = props.issue.repository.fullName.split('/')
   return (
     <Flex alignItems="center" gap="2">
       <>
@@ -76,7 +77,7 @@ const IssueRow = (props: IssueRowProps) => {
 
         <Flex flex="1" direction="column" gap="1">
           <Heading as="h3" size="sm">
-            <NextLink href={{ pathname: "/issues/[id]", query: { id: props.issue.number } }} passHref>
+            <NextLink href={{ pathname: "/issues/[org]/[repo]/[id]", query: { org: orgName, repo: repoName, id: props.issue.number } }} passHref>
               <Link _hover={{ color: "blue.500" }}>{props.issue.title}</Link>
             </NextLink>
           </Heading>

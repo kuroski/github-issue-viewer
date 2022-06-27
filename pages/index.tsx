@@ -126,18 +126,17 @@ type IssuesListProps = {};
 
 const IssuesList = (props: IssuesListProps) => {
   const [rowSelection, setRowSelection] = useState({});
+  const [query, setQuery] = useQueryParams({
+    state: withDefault(createEnumParam<State>(['open', 'closed']), 'open')
+  })
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([
     {
       id: 'cell',
       value: {
-        state: 'open'
+        state: query.state
       }
     }
   ])
-
-  const [query, setQuery] = useQueryParams({
-    status: withDefault(createEnumParam<State>(['open', 'closed']), 'open')
-  })
 
   const issues = trpc.useQuery(["github.issues.list"], {
     refetchOnWindowFocus: false,
@@ -159,14 +158,16 @@ const IssuesList = (props: IssuesListProps) => {
       columnFilters,
     },
     onColumnFiltersChange: setColumnFilters,
+    onRowSelectionChange: setRowSelection,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    onRowSelectionChange: setRowSelection,
     meta
   });
 
   useEffect(() => {
-    console.log(columnFilters)
+    const filter = columnFilters[0]?.value
+    if (!filter || !isFilter(filter)) return
+    setQuery(filter)
   }, [columnFilters])
 
   if (!issues.data)
