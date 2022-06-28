@@ -22,6 +22,7 @@ import { useSession } from "next-auth/react";
 import { createEnumParam, useQueryParams, withDefault } from "next-query-params";
 import React, { useEffect, useState } from "react";
 
+import GithubInput from "@/components/GithubInput";
 import IssueRow from "@/components/IssueRow";
 import OpenIcon from "@/components/OpenIcon";
 import DefaultLayout from "@/layouts/DefaultLayout";
@@ -157,6 +158,7 @@ const IssuesList = () => {
 
   return (
     <Flex direction="column" mt="10">
+      <GithubInput />
       <Button type="button" onClick={() => setGlobalFilter({ state: 'all' })} alignSelf="flex-end" variant="outline">Clear</Button>
       <TableContainer>
         <Table>
