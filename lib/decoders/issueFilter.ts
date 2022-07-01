@@ -1,9 +1,14 @@
 import { z } from "zod";
 
-import { stateDecoder } from "@/lib/decoders/issue";
+import { stateDecoder, visibilityDecoder } from "@/lib/decoders/issue";
+
+export const issueTypeDecoder = z.union([z.literal("created"), z.literal("assigned"), z.literal("mentioned")]);
+export type IssueType = z.TypeOf<typeof issueTypeDecoder>;
 
 export const issueFilterDecoder = z.object({
-  state: stateDecoder.nullish()
+  state: stateDecoder.nullish(),
+  type: issueTypeDecoder.nullish(),
+  visibility: visibilityDecoder.nullish(),
 })
 export type IssueFilter = z.TypeOf<typeof issueFilterDecoder>
 

@@ -23,19 +23,28 @@ const githubRoute = createProtectedRouter()
         });
       }
 
-      const issues = await octokit(account.access_token).issues()
+      const issues = await octokit(account.access_token).issues({
+        filter: input.type || 'created'
+      })
 
-      const meta: IssueMeta = {
-        closedCount: issues.reduce((acc, issue) => issue.state === 'closed' ? acc + 1 : acc, 0),
-        openCount: issues.reduce((acc, issue) => issue.state === 'open' ? acc + 1 : acc, 0),
-      }
-
-      return {
-        issues: issues.filter((issue) => {
+      const filteredIssues = issues
+        .filter((issue) => {
           if (!input.state) return issue.state === 'open'
           if (input.state === 'all') return true
           return issue.state === input.state
-        }),
+        })
+        .filter((issue) => {
+          if (!input.visibility || input.visibility === 'all') return true
+          return input.visibility === issue.repository.visibility
+        })
+
+      const meta: IssueMeta = {
+        closedCount: filteredIssues.reduce((acc, issue) => issue.state === 'closed' ? acc + 1 : acc, 0),
+        openCount: filteredIssues.reduce((acc, issue) => issue.state === 'open' ? acc + 1 : acc, 0),
+      }
+
+      return {
+        issues: filteredIssues,
         meta
       };
     },

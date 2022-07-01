@@ -1,6 +1,6 @@
 import {
   Alert,
-  AlertIcon, Button, ButtonGroup, Center,
+  AlertIcon, Box, Button, ButtonGroup, Center,
   Checkbox, Flex, Spinner,
   Table,
   TableContainer,
@@ -20,14 +20,15 @@ import {
 import type { NextPage } from "next";
 import { useSession } from "next-auth/react";
 import { createEnumParam, useQueryParams, withDefault } from "next-query-params";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
-import GithubInput from "@/components/GithubInput";
+import Filters from "@/components/Filters";
 import IssueRow from "@/components/IssueRow";
 import OpenIcon from "@/components/OpenIcon";
 import DefaultLayout from "@/layouts/DefaultLayout";
-import { IssueDecoder, State, stateDecoder } from "@/lib/decoders/issue";
-import { IssueFilter, issueFilterDecoder, IssueMeta } from "@/lib/decoders/issueFilter";
+import { IssueDecoder, State } from "@/lib/decoders/issue";
+import { Visibility } from "@/lib/decoders/issue";
+import { IssueFilter, issueFilterDecoder, IssueMeta, IssueType } from "@/lib/decoders/issueFilter";
 import { trpc } from "@/lib/trpc";
 
 // TABLE
@@ -71,7 +72,7 @@ const columns = [
             {...filters.state === 'open' ? { color: 'blue.500' } : {}}
             onClick={() => {
               instance.resetRowSelection()
-              instance.setGlobalFilter(() => ({ state: 'open' }))
+              instance.setGlobalFilter(() => ({ ...filters, state: 'open' }))
             }}
           >
             <Flex alignItems="center" gap="2">
@@ -83,7 +84,7 @@ const columns = [
             {...filters.state === 'closed' ? { color: 'blue.500' } : {}}
             onClick={() => {
               instance.resetRowSelection()
-              instance.setGlobalFilter(() => ({ state: 'closed' }))
+              instance.setGlobalFilter(() => ({ ...filters, state: 'closed' }))
             }}
           >
             <Flex alignItems="center" gap="2">
@@ -102,15 +103,17 @@ const columns = [
 const IssuesList = () => {
   const [rowSelection, setRowSelection] = useState({});
   const [query, setQuery] = useQueryParams({
-    state: withDefault(createEnumParam<State>(['all', 'open', 'closed']), 'open')
+    state: withDefault(createEnumParam<State>(['all', 'open', 'closed']), 'open'),
+    type: withDefault(createEnumParam<IssueType>(['assigned', 'created', 'mentioned']), 'created'),
+    visibility: withDefault(createEnumParam<Visibility>(['all', 'public', 'private']), 'all'),
   })
   const [globalFilter, setGlobalFilter] = useState<IssueFilter>({
-    state: query.state || 'open'
+    state: query.state || 'open',
+    type: query.type || 'created',
+    visibility: query.visibility || 'all',
   })
 
-  const issues = trpc.useQuery(["github.issues.list", {
-    state: query.state
-  }], {
+  const issues = trpc.useQuery(["github.issues.list", query], {
     refetchOnWindowFocus: false,
     retry: 0,
   });
@@ -134,9 +137,7 @@ const IssuesList = () => {
   });
 
   useEffect(() => {
-    setQuery({
-      state: globalFilter.state
-    })
+    setQuery(globalFilter)
   }, [globalFilter])
 
   if (!issues.data)
@@ -158,8 +159,16 @@ const IssuesList = () => {
 
   return (
     <Flex direction="column" mt="10">
-      <GithubInput />
-      <Button type="button" onClick={() => setGlobalFilter({ state: 'all' })} alignSelf="flex-end" variant="outline">Clear</Button>
+      <Box mb="4">
+        <Filters globalFilter={globalFilter} onChange={(value) => {
+          setGlobalFilter({
+            ...globalFilter,
+            ...value
+          })
+        }} />
+      </Box>
+
+      <Button type="button" onClick={() => setGlobalFilter({ ...globalFilter, state: 'all' })} alignSelf="flex-end" variant="outline">Clear</Button>
       <TableContainer>
         <Table>
           <Thead>

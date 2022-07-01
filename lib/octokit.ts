@@ -1,10 +1,11 @@
 import { Octokit } from "octokit";
 
 import { issuesResponseDecoder } from "@/lib/decoders/issue";
+import { IssueType } from "@/lib/decoders/issueFilter";
 import { reposResponseDecoder } from "@/lib/decoders/repo";
 
 export function issues(octokit: Octokit) {
-  return (options?: { pagination?: number }) =>
+  return (options?: { pagination?: number, filter: IssueType }) =>
     octokit.rest.issues
       .list({
         per_page: 100,
@@ -13,6 +14,7 @@ export function issues(octokit: Octokit) {
         pulls: false,
         collab: true,
         state: "all",
+        filter: "created",
         ...options,
       })
       .then(issuesResponseDecoder.parse);

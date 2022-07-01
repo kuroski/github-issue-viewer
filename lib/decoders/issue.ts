@@ -6,6 +6,9 @@ import { dateFrom, isISODate } from "@/lib/utils";
 export const stateDecoder = z.union([z.literal("all"), z.literal("open"), z.literal("closed")]);
 export type State = z.TypeOf<typeof stateDecoder>;
 
+export const visibilityDecoder = z.union([z.literal("all"), z.literal("public"), z.literal("private")]);
+export type Visibility = z.TypeOf<typeof visibilityDecoder>;
+
 const userDecoder = z.object({
   login: z.string(),
   id: z.number(),
@@ -37,7 +40,7 @@ export const issueDecoder = z
         id: z.number(),
         url: z.string().url(),
         name: z.string(),
-        description: z.string(),
+        description: z.string().nullish(),
         color: z.string(),
       })
     ),
@@ -61,6 +64,7 @@ export const issueDecoder = z
       description: z.string().nullish(),
       html_url: z.string().url(),
       private: z.boolean(),
+      visibility: visibilityDecoder.nullish(),
     }),
     timeline_url: z.string().url(),
   })
