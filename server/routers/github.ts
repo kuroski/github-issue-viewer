@@ -27,16 +27,10 @@ const githubRoute = createProtectedRouter()
         filter: input.type || 'created'
       })
 
-      const filteredIssues = issues
-        .filter((issue) => {
-          if (!input.state) return issue.state === 'open'
-          if (input.state === 'all') return true
-          return issue.state === input.state
-        })
-        .filter((issue) => {
-          if (!input.visibility || input.visibility === 'all') return true
-          return input.visibility === issue.repository.visibility
-        })
+      const filteredIssues = issues.filter((issue) => {
+        if (!input.visibility || input.visibility === 'all') return true
+        return input.visibility === issue.repository.visibility
+      })
 
       const meta: IssueMeta = {
         closedCount: filteredIssues.reduce((acc, issue) => issue.state === 'closed' ? acc + 1 : acc, 0),
@@ -44,32 +38,14 @@ const githubRoute = createProtectedRouter()
       }
 
       return {
-        issues: filteredIssues,
+        issues: filteredIssues.filter((issue) => {
+          if (!input.state) return issue.state === 'open'
+          if (input.state === 'all') return true
+          return issue.state === input.state
+        }),
         meta
       };
     },
   })
-  .query("repos.list", {
-    async resolve({ ctx }) {
-
-      const account = await prisma.account.findFirst({
-        where: {
-          userId: ctx.session.user.id,
-        },
-        rejectOnNotFound: true,
-      });
-
-      if (!account.access_token) {
-        throw new trpc.TRPCError({
-          code: "UNAUTHORIZED",
-          message: "User does not have access token",
-        });
-      }
-
-      const repos = await octokit(account.access_token).repos()
-
-      return repos;
-    }
-  });
 
 export default githubRoute;

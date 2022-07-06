@@ -159,16 +159,16 @@ const IssuesList = () => {
 
   return (
     <Flex direction="column" mt="10">
-      <Box mb="4">
+      <Flex mb="4" gap="4" alignItems="center" justifyContent="space-between">
         <Filters globalFilter={globalFilter} onChange={(value) => {
           setGlobalFilter({
             ...globalFilter,
             ...value
           })
         }} />
-      </Box>
+        <Button type="button" onClick={() => setGlobalFilter({ ...globalFilter, state: 'all' })} alignSelf="flex-end" variant="outline">Clear</Button>
+      </Flex>
 
-      <Button type="button" onClick={() => setGlobalFilter({ ...globalFilter, state: 'all' })} alignSelf="flex-end" variant="outline">Clear</Button>
       <TableContainer>
         <Table>
           <Thead>

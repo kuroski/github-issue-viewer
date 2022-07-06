@@ -2,7 +2,6 @@ import { Octokit } from "octokit";
 
 import { issuesResponseDecoder } from "@/lib/decoders/issue";
 import { IssueType } from "@/lib/decoders/issueFilter";
-import { reposResponseDecoder } from "@/lib/decoders/repo";
 
 export function issues(octokit: Octokit) {
   return (options?: { pagination?: number, filter: IssueType }) =>
@@ -20,15 +19,6 @@ export function issues(octokit: Octokit) {
       .then(issuesResponseDecoder.parse);
 }
 
-export function repos(octokit: Octokit) {
-  return () =>
-    octokit
-      .rest
-      .repos
-      .listForAuthenticatedUser()
-      .then(reposResponseDecoder.parse);
-}
-
 function bootstrap(token: string) {
   const octokit = new Octokit({
     auth: token,
@@ -36,7 +26,6 @@ function bootstrap(token: string) {
   return {
     octokit,
     issues: issues(octokit),
-    repos: repos(octokit),
   };
 }
 
