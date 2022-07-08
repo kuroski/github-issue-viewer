@@ -14,7 +14,7 @@ const authOptions: NextAuthOptions = {
       clientSecret: serverEnv.GITHUB_SECRET,
       authorization: {
         params: {
-          scope: "read:user,user:email,repo",
+          scope: "read:user,user:email,repo,read:org",
         },
       },
     }),

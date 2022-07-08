@@ -20,8 +20,9 @@ const IssueSubtitle = (props: IssueSubtitleProps) => {
       <Text color="gray" fontSize="sm">
         <Trans
           i18nKey="common:issue_subtitle_open"
-          components={[<UserLink user={props.user} key="user" />]}
+          components={[<UserLink user={props.user} key="user" />, <br key="break" />]}
           values={{
+            repo: props.repository.fullName,
             number: props.number,
             date: date.format(props.createdAt),
             user: props.user.login,
@@ -40,8 +41,9 @@ const IssueSubtitle = (props: IssueSubtitleProps) => {
     <Text color="gray" fontSize="sm">
       <Trans
         i18nKey="common:issue_subtitle_close"
-        components={[<UserLink user={props.user} key="user" />]}
+        components={[<UserLink user={props.user} key="user" />, <br key="break" />]}
         values={{
+          repo: props.repository.fullName,
           number: props.number,
           date: date.format(props.closedAt),
           user: props.user.login,

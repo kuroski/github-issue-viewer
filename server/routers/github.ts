@@ -1,13 +1,13 @@
 import * as trpc from "@trpc/server";
 
-import { issueFilterDecoder, IssueMeta } from "@/lib/decoders/issueFilter";
+import { filterDecoder, FilterMeta } from "@/lib/decoders/filter";
 import octokit from "@/lib/octokit";
 import prisma from "@/lib/prisma";
 import { createProtectedRouter } from "@/server/create-protected-router";
 
 const githubRoute = createProtectedRouter()
   .query("issues.list", {
-    input: issueFilterDecoder,
+    input: filterDecoder,
     async resolve({ ctx, input }) {
       const account = await prisma.account.findFirst({
         where: {
@@ -23,16 +23,28 @@ const githubRoute = createProtectedRouter()
         });
       }
 
-      const issues = await octokit(account.access_token).issues({
-        filter: input.type || 'created'
-      })
+      const instance = octokit(account.access_token)
+      const [issues, orgs, repos] = await Promise.all([
+        instance.issues({
+          filter: input.type || 'created',
+        }),
+        instance.orgs(),
+        instance.repos()
+      ])
 
-      const filteredIssues = issues.filter((issue) => {
-        if (!input.visibility || input.visibility === 'all') return true
-        return input.visibility === issue.repository.visibility
-      })
+      const filteredRepos = input.repos?.flatMap((f) => !!f ? [f] : []) || []
 
-      const meta: IssueMeta = {
+      const filteredIssues = issues
+        .filter((issue) => {
+          if (!input.visibility || input.visibility === 'all') return true
+          return input.visibility === issue.repository.visibility
+        })
+        .filter(issue => {
+          if (filteredRepos.length === 0) return true
+          return filteredRepos.includes(issue.repository.fullName)
+        })
+
+      const meta: FilterMeta = {
         closedCount: filteredIssues.reduce((acc, issue) => issue.state === 'closed' ? acc + 1 : acc, 0),
         openCount: filteredIssues.reduce((acc, issue) => issue.state === 'open' ? acc + 1 : acc, 0),
       }
@@ -43,7 +55,9 @@ const githubRoute = createProtectedRouter()
           if (input.state === 'all') return true
           return issue.state === input.state
         }),
-        meta
+        meta,
+        orgs,
+        repos
       };
     },
   })

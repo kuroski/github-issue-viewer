@@ -5,15 +5,19 @@ import { stateDecoder, visibilityDecoder } from "@/lib/decoders/issue";
 export const issueTypeDecoder = z.union([z.literal("created"), z.literal("assigned"), z.literal("mentioned")]);
 export type IssueType = z.TypeOf<typeof issueTypeDecoder>;
 
-export const issueFilterDecoder = z.object({
+export const filterArrayValueDecoder = z.array(z.string())
+
+export const filterDecoder = z.object({
   state: stateDecoder.nullish(),
   type: issueTypeDecoder.nullish(),
   visibility: visibilityDecoder.nullish(),
+  orgs: z.array(z.string().nullable()).nullish(),
+  repos: z.array(z.string().nullable()).nullish(),
 })
-export type IssueFilter = z.TypeOf<typeof issueFilterDecoder>
+export type Filter = z.TypeOf<typeof filterDecoder>
 
-export const issueMetaDecoder = z.object({
+export const filterMetaDecoder = z.object({
   closedCount: z.number(),
   openCount: z.number()
 })
-export type IssueMeta = z.TypeOf<typeof issueMetaDecoder>
+export type FilterMeta = z.TypeOf<typeof filterMetaDecoder>

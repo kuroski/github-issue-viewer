@@ -19,22 +19,22 @@ import {
 } from "@tanstack/react-table";
 import type { NextPage } from "next";
 import { useSession } from "next-auth/react";
-import { createEnumParam, useQueryParams, withDefault } from "next-query-params";
+import { ArrayParam, createEnumParam, useQueryParams, withDefault } from "next-query-params";
 import { useEffect, useState } from "react";
 
 import Filters from "@/components/Filters";
 import IssueRow from "@/components/IssueRow";
 import OpenIcon from "@/components/OpenIcon";
 import DefaultLayout from "@/layouts/DefaultLayout";
+import { Filter, filterDecoder, FilterMeta, IssueType } from "@/lib/decoders/filter";
 import { IssueDecoder, State } from "@/lib/decoders/issue";
 import { Visibility } from "@/lib/decoders/issue";
-import { IssueFilter, issueFilterDecoder, IssueMeta, IssueType } from "@/lib/decoders/issueFilter";
 import { trpc } from "@/lib/trpc";
 
 // TABLE
 const table = createTable()
   .setRowType<IssueDecoder>()
-  .setTableMetaType<IssueMeta>()
+  .setTableMetaType<FilterMeta>()
 
 const columns = [
   table.createDisplayColumn({
@@ -65,7 +65,7 @@ const columns = [
         openCount: 0,
         closedCount: 0
       }
-      const filters = issueFilterDecoder.parse(instance.getState().globalFilter)
+      const filters = filterDecoder.parse(instance.getState().globalFilter)
       return (
         <ButtonGroup variant="ghost" colorScheme="gray.500" >
           <Button
@@ -102,24 +102,28 @@ const columns = [
 // COMPONENT
 const IssuesList = () => {
   const [rowSelection, setRowSelection] = useState({});
-  const [query, setQuery] = useQueryParams({
+  const [queryParams, setQueryParams] = useQueryParams({
     state: withDefault(createEnumParam<State>(['all', 'open', 'closed']), 'open'),
     type: withDefault(createEnumParam<IssueType>(['assigned', 'created', 'mentioned']), 'created'),
     visibility: withDefault(createEnumParam<Visibility>(['all', 'public', 'private']), 'all'),
+    orgs: ArrayParam,
+    repos: ArrayParam
   })
-  const [globalFilter, setGlobalFilter] = useState<IssueFilter>({
-    state: query.state || 'open',
-    type: query.type || 'created',
-    visibility: query.visibility || 'all',
+  const [globalFilter, setGlobalFilter] = useState<Filter>({
+    state: queryParams.state || 'open',
+    type: queryParams.type || 'created',
+    visibility: queryParams.visibility || 'all',
+    orgs: queryParams.orgs || [],
+    repos: queryParams.repos || [],
   })
 
-  const issues = trpc.useQuery(["github.issues.list", query], {
+  const query = trpc.useQuery(["github.issues.list", queryParams], {
     refetchOnWindowFocus: false,
     retry: 0,
   });
 
   const instance = useTableInstance(table, {
-    data: issues.data?.issues ?? [],
+    data: query.data?.issues ?? [],
     columns,
     state: {
       rowSelection,
@@ -127,32 +131,32 @@ const IssuesList = () => {
     },
     onGlobalFilterChange: setGlobalFilter,
     onRowSelectionChange: setRowSelection,
-    manualFiltering: true,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    meta: issues.data?.meta ?? {
+    manualFiltering: true,
+    meta: query.data?.meta ?? {
       closedCount: 0,
       openCount: 0
     }
   });
 
   useEffect(() => {
-    setQuery(globalFilter)
+    setQueryParams(globalFilter)
   }, [globalFilter])
 
-  if (!issues.data)
+  if (!query.data)
     return (
       <Center>
         <Spinner />
       </Center>
     );
 
-  if (issues.error)
+  if (query.error)
     return (
       <Alert status="error">
         <>
           <AlertIcon />
-          {issues.error}
+          {query.error}
         </>
       </Alert>
     );
@@ -160,13 +164,17 @@ const IssuesList = () => {
   return (
     <Flex direction="column" mt="10">
       <Flex mb="4" gap="4" alignItems="center" justifyContent="space-between">
-        <Filters globalFilter={globalFilter} onChange={(value) => {
-          setGlobalFilter({
-            ...globalFilter,
-            ...value
-          })
-        }} />
-        <Button type="button" onClick={() => setGlobalFilter({ ...globalFilter, state: 'all' })} alignSelf="flex-end" variant="outline">Clear</Button>
+        <Filters
+          orgs={query.data.orgs}
+          repos={query.data.repos}
+          globalFilter={globalFilter}
+          onChange={(value) => {
+            setGlobalFilter({
+              ...globalFilter,
+              ...value
+            })
+          }} />
+        <Button type="button" onClick={() => setGlobalFilter({ state: 'all', type: null, visibility: null, repos: [], orgs: [] })} alignSelf="flex-end" variant="outline">Clear</Button>
       </Flex>
 
       <TableContainer>
