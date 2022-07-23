@@ -13,10 +13,15 @@ const config: PlaywrightTestConfig = {
   timeout: 30 * 1000,
   // Test directory
   testDir: path.join(__dirname, 'e2e'),
-  // If a test fails, retry it additional 2 times
-  retries: 2,
   // Artifacts folder where screenshots, videos, and traces are stored.
-  outputDir: 'test-results/',
+  outputDir: 'test-results/',/* Fail the build on CI if you accidentally left test.only in the source code. */
+  forbidOnly: !!process.env.CI,
+  /* Retry on CI only */
+  retries: process.env.CI ? 2 : 0,
+  /* Opt out of parallel tests on CI. */
+  workers: process.env.CI ? 1 : undefined,
+
+  // globalSetup: 'e2e/globalSetup.ts',
 
   // Run your local dev server before starting the tests:
   // https://playwright.dev/docs/test-advanced#launching-a-development-web-server-during-the-tests
