@@ -1,55 +1,70 @@
 import { expect, test as base } from "@playwright/test";
-// import type { MockServiceWorker } from "playwright-msw";
-// import { createServer, createWorkerFixture } from "playwright-msw";
+import Koa from "koa"
+import { rest } from 'msw'
+import { SetupServerApi } from "msw/node";
+import { setupServer } from 'msw/node'
+import next from "next";
+import path from "node:path"
+import { parse } from "node:url";
 
-// import handlers from "./mocks/handlers";
-// import { server } from './server.js'
 
-const test = base.extend<{
-  // worker: MockServiceWorker;
-}>({
-  // worker: createWorkerFixture(...handlers),
-  // worker: [
-  //   async ({ page }, use) => {
-  //     page.on('request', request =>
-  //       console.log('>>', request.method(), request.url()));
+const handlers = [
+  rest.all('https://github.com*', (req, res, ctx) => {
+    return res(
+      ctx.status(500),
+      ctx.json({ error: 'Oops' })
+    )
+  }),
+  rest.all('*', (req, res, ctx) => {
+    console.log('+++++++++++++')
+    return res(ctx.status(200), ctx.json({}))
+  })
+]
+const mockServer = setupServer(...handlers)
 
-  //     await page.context().clearCookies()
-  //     await page.context().addCookies([
-  //       {
-  //         name: 'next-auth.session-token',
-  //         value: '04456e41-ec3b-4edf-92c1-48c14e57cacd2',
-  //         domain: 'localhost',
-  //         path: '/',
-  //         httpOnly: true,
-  //         sameSite: 'Lax'
-  //       }
-  //     ])
+const app = next({ dev: true, dir: path.resolve(__dirname, "..") });
+const port = process.env.PORT || 3000;
 
-  //     server.listen()
-  //     const s = await createServer(page, ...handlers);
-  //     // Test has not started to execute...
-  //     await use(s);
-  //     server.resetHandlers()
-  //     // Test has finished executing...
-  //     // [insert any cleanup actions here]
-  //   },
-  //   {
-  //     /**
-  //      * Scope this fixture on a per test basis to ensure that each test has a
-  //      * fresh copy of MSW. Note: the scope MUST be "test" to be able to use the
-  //      * `page` fixture as it is not possible to access it when scoped to the
-  //      * "worker".
-  //      */
-  //     scope: "test",
-  //     /**
-  //      * By default, fixtures are lazy; they will not be initalised unless they're
-  //      * used by the test. Setting `true` here means that the fixture will be auto-
-  //      * initialised even if the test doesn't use it.
-  //      */
-  //     auto: true,
-  //   },
-  // ],
-});
+// const test = base.extend<{
+//   port: SetupServerApi;
+//   rest: typeof rest;
+// }>({
+//   // the port function is the same as before
+//   port: [
+//     async ({ }, use) => {
+//       await app.prepare();
+//       const handle = await app.getRequestHandler();
+
+//       // start next server on arbitrary port
+//       await new Promise((resolve) => {
+//         const s = new Koa();
+//         s.use(ctx => {
+//           const parsedUrl = parse(ctx.req.url!, true);
+//           console.log(parsedUrl.href)
+//           return (handle(ctx.req, ctx.res, parsedUrl))
+//         });
+//         s.listen(port, (err?: any) => {
+//           if (err) throw err;
+
+//           console.log(`> Ready on localhost:${port} - env ${process.env.NODE_ENV}`);
+//           resolve(s)
+//         });
+//       })
+//       mockServer.listen({ onUnhandledRequest: 'error' })
+
+
+//       // provide port to tests
+//       await use(mockServer);
+//     },
+//     {
+//       //@ts-ignore
+//       scope: "worker",
+//       auto: true,
+//     },
+//   ],
+//   rest,
+// });
+
+const test = base.extend<{}>({});
 
 export { expect, test };
