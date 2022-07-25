@@ -65,6 +65,7 @@ const port = process.env.PORT || 3000;
 //   rest,
 // });
 
-const test = base.extend<{}>({});
+const test = base.extend<{}>({
+});
 
 export { expect, test };

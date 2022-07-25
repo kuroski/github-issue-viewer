@@ -1,6 +1,6 @@
 // import { rest } from "msw";
 
-// import { mockServer } from "./server";
+// import server from "./server";
 import { expect, test } from "./test";
 
 test.describe("A demo of playwright-msw's functionality", () => {
@@ -16,17 +16,21 @@ test.describe("A demo of playwright-msw's functionality", () => {
     page.on('request', request =>
       console.log('>>', request.method(), request.url()));
 
-    await page.context().clearCookies()
-    await page.context().addCookies([
-      {
-        name: 'next-auth.session-token',
-        value: '04456e41-ec3b-4edf-92c1-48c14e57cacd2',
-        domain: 'localhost',
-        path: '/',
-        httpOnly: true,
-        sameSite: 'Lax'
-      }
-    ])
+    // await page.context().clearCookies()
+    // await page.context().addCookies([
+    //   {
+    //     name: 'next-auth.session-token',
+    //     value: '04456e41-ec3b-4edf-92c1-48c14e57cacd2',
+    //     domain: 'localhost',
+    //     path: '/',
+    //     httpOnly: true,
+    //     sameSite: 'Lax',
+    //     expires: 1661406204
+    //   }
+    // ])
+
+    const cookies = await page.context().cookies()
+    console.log('COOKIES', cookies)
 
     await page.goto(`/`);
     // console.log(port)

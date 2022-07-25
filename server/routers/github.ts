@@ -9,11 +9,10 @@ const githubRoute = createProtectedRouter()
   .query("issues.list", {
     input: filterDecoder,
     async resolve({ ctx, input }) {
-      const account = await prisma.account.findFirst({
+      const account = await prisma.account.findFirstOrThrow({
         where: {
           userId: ctx.session.user.id,
         },
-        rejectOnNotFound: true,
       });
 
       if (!account.access_token) {
