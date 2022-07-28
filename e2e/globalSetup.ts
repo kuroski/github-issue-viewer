@@ -4,7 +4,6 @@ import path from 'node:path'
 import prisma from '@/lib/prisma';
 
 async function globalSetup() {
-  console.log('---- BUILDING')
   const storagePath = path.resolve(__dirname, 'storageState.json')
   const date = new Date()
   const sessionToken = '04456e41-ec3b-4edf-92c1-48c14e57cacd2'
@@ -35,7 +34,6 @@ async function globalSetup() {
     update: {},
   })
 
-  // await cli.nextBuild([path.join(__dirname, "..")]);
   const browser = await chromium.launch();
   const context = await browser.newContext({ storageState: storagePath });
   await context.addCookies([
@@ -51,7 +49,6 @@ async function globalSetup() {
   ])
   await context.storageState({ path: storagePath });
   await browser.close();
-  console.log('---- BUILDED!')
 }
 
 export default globalSetup;
