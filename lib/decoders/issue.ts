@@ -1,4 +1,4 @@
-import camelcaseKeys, { CamelCaseKeys } from "camelcase-keys";
+import camelcaseKeys, { type CamelCaseKeys } from "camelcase-keys";
 import { z } from "zod";
 
 import { dateFrom, isISODate } from "@/lib/utils";

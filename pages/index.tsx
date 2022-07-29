@@ -1,6 +1,6 @@
 import {
   Alert,
-  AlertIcon, Box, Button, ButtonGroup, Center,
+  AlertIcon, Button, ButtonGroup, Center,
   Checkbox, Flex, Spinner,
   Table,
   TableContainer,
@@ -12,10 +12,12 @@ import {
 } from "@chakra-ui/react";
 import { CheckIcon } from "@radix-ui/react-icons";
 import {
-  createTable,
+  createColumnHelper,
+  flexRender,
   getCoreRowModel,
   getFilteredRowModel,
-  useTableInstance
+  RowData,
+  useReactTable
 } from "@tanstack/react-table";
 import type { NextPage } from "next";
 import { useSession } from "next-auth/react";
@@ -27,24 +29,24 @@ import IssueRow from "@/components/IssueRow";
 import OpenIcon from "@/components/OpenIcon";
 import DefaultLayout from "@/layouts/DefaultLayout";
 import { Filter, filterDecoder, FilterMeta, IssueType } from "@/lib/decoders/filter";
-import { IssueDecoder, State } from "@/lib/decoders/issue";
-import { Visibility } from "@/lib/decoders/issue";
+import { IssueDecoder, State, Visibility } from "@/lib/decoders/issue";
 import { trpc } from "@/lib/trpc";
 
-// TABLE
-const table = createTable()
-  .setRowType<IssueDecoder>()
-  .setTableMetaType<FilterMeta>()
+declare module '@tanstack/table-core' {
+  interface TableMeta<TData extends RowData> extends FilterMeta { }
+}
+
+const columnHelper = createColumnHelper<IssueDecoder>()
 
 const columns = [
-  table.createDisplayColumn({
+  columnHelper.display({
     id: "select",
-    header: ({ instance }) => (
+    header: ({ table }) => (
       <Checkbox
         {...{
-          isChecked: instance.getIsAllRowsSelected(),
-          isIndeterminate: instance.getIsSomeRowsSelected(),
-          onChange: instance.getToggleAllRowsSelectedHandler(),
+          isChecked: table.getIsAllRowsSelected(),
+          isIndeterminate: table.getIsSomeRowsSelected(),
+          onChange: table.getToggleAllRowsSelectedHandler(),
         }}
       />
     ),
@@ -58,21 +60,21 @@ const columns = [
       />
     ),
   }),
-  table.createDataColumn((issue) => issue, {
+  columnHelper.accessor((issue) => issue, {
     id: 'cell',
-    header: ({ instance }) => {
-      const { openCount, closedCount } = instance.options.meta ?? {
+    header: ({ table }) => {
+      const { openCount, closedCount } = table.options.meta ?? {
         openCount: 0,
         closedCount: 0
       }
-      const filters = filterDecoder.parse(instance.getState().globalFilter)
+      const filters = filterDecoder.parse(table.getState().globalFilter)
       return (
         <ButtonGroup variant="ghost" colorScheme="gray.500" >
           <Button
             {...filters.state === 'open' ? { color: 'blue.500' } : {}}
             onClick={() => {
-              instance.resetRowSelection()
-              instance.setGlobalFilter(() => ({ ...filters, state: 'open' }))
+              table.resetRowSelection()
+              table.setGlobalFilter(() => ({ ...filters, state: 'open' }))
             }}
           >
             <Flex alignItems="center" gap="2">
@@ -83,8 +85,8 @@ const columns = [
           <Button
             {...filters.state === 'closed' ? { color: 'blue.500' } : {}}
             onClick={() => {
-              instance.resetRowSelection()
-              instance.setGlobalFilter(() => ({ ...filters, state: 'closed' }))
+              table.resetRowSelection()
+              table.setGlobalFilter(() => ({ ...filters, state: 'closed' }))
             }}
           >
             <Flex alignItems="center" gap="2">
@@ -122,7 +124,7 @@ const IssuesList = () => {
     retry: 0,
   });
 
-  const instance = useTableInstance(table, {
+  const table = useReactTable({
     data: query.data?.issues ?? [],
     columns,
     state: {
@@ -180,21 +182,21 @@ const IssuesList = () => {
       <TableContainer>
         <Table>
           <Thead>
-            {instance.getHeaderGroups().map((headerGroup) => (
+            {table.getHeaderGroups().map((headerGroup) => (
               <Tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
                   <Th key={header.id} colSpan={header.colSpan}>
-                    {header.isPlaceholder ? null : header.renderHeader()}
+                    {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                   </Th>
                 ))}
               </Tr>
             ))}
           </Thead>
           <Tbody>
-            {instance.getRowModel().rows.map((row) => (
+            {table.getRowModel().rows.map((row) => (
               <Tr key={row.id}>
                 {row.getVisibleCells().map((cell) => (
-                  <Td key={cell.id}>{cell.renderCell()}</Td>
+                  <Td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</Td>
                 ))}
               </Tr>
             ))}
