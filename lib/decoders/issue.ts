@@ -1,4 +1,4 @@
-import camelcaseKeys, { type CamelCaseKeys } from "camelcase-keys";
+import camelcaseKeys from "camelcase-keys";
 import { z } from "zod";
 
 import { dateFrom, isISODate } from "@/lib/utils";
@@ -17,7 +17,8 @@ const userDecoder = z.object({
   url: z.string().url(),
   html_url: z.string().url(),
 })
-export type User = CamelCaseKeys<z.TypeOf<typeof userDecoder>>
+const userDecoderCamelized = userDecoder.transform((issue) => camelcaseKeys(issue, { deep: true }));
+export type User = z.TypeOf<typeof userDecoderCamelized>
 
 const isoDateDecoder = z
   .string()

@@ -29,7 +29,7 @@
     "@trpc/next": "^9.25.3",
     "@trpc/react": "^9.25.3",
     "@trpc/server": "^9.25.3",
-    "camelcase-keys": "^8.0.1",
+    "camelcase-keys": "7.0.2",
     "csstype": "^3.0.10",
     "envsafe": "^2.0.3",
     "fp-ts": "^2.12.1",
@@ -51,6 +51,7 @@
     "zod": "^3.17.3"
   },
   "devDependencies": {
+    "@anatine/zod-mock": "^3.5.6",
     "@babel/core": ">=7.0.0 <8.0.0",
     "@faker-js/faker": "^7.2.0",
     "@playwright/test": "^1.23.3",

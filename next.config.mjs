@@ -1,4 +1,4 @@
-const nextTranslate = require("next-translate");
+import nextTranslate from "next-translate";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -9,4 +9,4 @@ const nextConfig = {
   },
 };
 
-module.exports = nextTranslate(nextConfig);
+export default nextTranslate(nextConfig);
