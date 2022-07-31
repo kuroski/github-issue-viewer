@@ -5,11 +5,11 @@
   "scripts": {
     "postinstall": "prisma generate",
     "dev": "next dev",
-    "dev:e2e": "esno ./e2e/server.ts",
+    "dev:test": "esno ./e2e/mocks/server.ts",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test:e2e": "DEBUG=pw:api playwright test --headed",
+    "test": "DEBUG=pw:api PWDEBUG=1 playwright test",
     "vercel-build": "prisma migrate deploy && next build"
   },
   "prisma": {

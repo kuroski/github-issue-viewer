@@ -2,7 +2,7 @@ import Koa from "koa"
 import next from "next";
 import { parse } from "node:url";
 
-import mockServer from "./mock";
+import mockServer from '@/e2e/mocks/mockServer';
 
 const server = new Koa()
 const app = next({ dev: true })

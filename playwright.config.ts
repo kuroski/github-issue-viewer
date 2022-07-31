@@ -21,13 +21,13 @@ const config: PlaywrightTestConfig = {
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
 
-  globalSetup: './e2e/globalSetup.ts',
+  globalSetup: './e2e/setup/globalSetup.ts',
 
   // Run your local dev server before starting the tests:
   // https://playwright.dev/docs/test-advanced#launching-a-development-web-server-during-the-tests
   webServer: {
     // command: 'pnpm dev',
-    command: 'pnpm dev:e2e',
+    command: 'pnpm dev:test',
     url: baseURL,
     timeout: 120 * 1000,
     // reuseExistingServer: !Boolean(process.env.CI),
@@ -42,7 +42,7 @@ const config: PlaywrightTestConfig = {
     // More information: https://playwright.dev/docs/trace-viewer
     trace: 'retry-with-trace',
 
-    storageState: './e2e/storageState.json'
+    storageState: './e2e/setup/storageState.json'
 
     // All available context options: https://playwright.dev/docs/api/class-browser#browser-new-context
     // contextOptions: {

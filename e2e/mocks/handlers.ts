@@ -1,6 +1,5 @@
 import { generateMock } from '@anatine/zod-mock';
 import { rest } from 'msw';
-import { setupServer } from 'msw/node';
 import snakecaseKeys from 'snakecase-keys';
 
 import { issuesResponseDecoder } from '@/lib/decoders/issue';
@@ -31,5 +30,4 @@ const handlers = [
   )),
 ]
 
-const mockServer = setupServer(...handlers)
-export default mockServer
+export default handlers
