@@ -7,6 +7,12 @@
     "EditorConfig.EditorConfig",
     "codezombiech.gitignore",
     "foxundermoon.next-js",
-    "mikestead.dotenv"
+    "mikestead.dotenv",
+    "antfu.icons-carbon",
+    "antfu.theme-vitesse",
+    "file-icons.file-icons",
+    "sainnhe.gruvbox-material",
+    "richie5um2.vscode-sort-json",
+    "unional.vscode-sort-package-json"
   ]
 }

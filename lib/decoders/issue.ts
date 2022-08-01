@@ -1,45 +1,79 @@
+import camelcaseKeys from "camelcase-keys";
 import { z } from "zod";
 
-export const issueDecoder = z.union([
-  z.object({
-    url: z.string(),
-    titleHTML: z.string(),
-    bodyHTML: z.string(),
+import { dateFrom, isISODate } from "@/lib/utils";
+
+export const stateDecoder = z.union([z.literal("all"), z.literal("open"), z.literal("closed")]);
+export type State = z.TypeOf<typeof stateDecoder>;
+
+export const visibilityDecoder = z.union([z.literal("all"), z.literal("public"), z.literal("private")]);
+export type Visibility = z.TypeOf<typeof visibilityDecoder>;
+
+const userDecoder = z.object({
+  login: z.string(),
+  id: z.number(),
+  avatar_url: z.string().url(),
+  gravatar_id: z.string(),
+  url: z.string().url(),
+  html_url: z.string().url(),
+})
+const userDecoderCamelized = userDecoder.transform((issue) => camelcaseKeys(issue, { deep: true }));
+export type User = z.TypeOf<typeof userDecoderCamelized>
+
+const isoDateDecoder = z
+  .string()
+  .refine(isISODate, { message: "Not a valid ISO string date " })
+  .transform(dateFrom);
+
+export const issueDecoder = z
+  .object({
+    id: z.number(),
+    html_url: z.string().url(),
+    url: z.string().url(),
+    repository_url: z.string().url(),
     number: z.number(),
-    labels: z.object({ nodes: z.array(z.unknown()) }),
-  }),
-  z.object({
-    url: z.string(),
-    titleHTML: z.string(),
-    bodyHTML: z.string(),
-    number: z.number(),
-    labels: z.object({
-      nodes: z.array(
-        z.object({
-          url: z.string(),
-          color: z.string(),
-          name: z.string(),
-        })
-      ),
+    state: stateDecoder,
+    title: z.string(),
+    body: z.string().nullish(),
+    user: userDecoder,
+    labels: z.array(
+      z.object({
+        id: z.number(),
+        url: z.string().url(),
+        name: z.string(),
+        description: z.string().nullish(),
+        color: z.string(),
+      })
+    ),
+    assignees: z.array(
+      userDecoder
+    ),
+    comments: z.number(),
+    pull_request: z
+      .object({
+        url: z.string().url(),
+        html_url: z.string().url(),
+      })
+      .nullish(),
+    closed_at: isoDateDecoder.nullish(),
+    created_at: isoDateDecoder,
+    updated_at: isoDateDecoder,
+    repository: z.object({
+      id: z.number(),
+      name: z.string(),
+      full_name: z.string(),
+      description: z.string().nullish(),
+      html_url: z.string().url(),
+      private: z.boolean(),
+      visibility: visibilityDecoder.nullish(),
     }),
-  }),
-]);
+    timeline_url: z.string().url(),
+  })
+  .transform((issue) => camelcaseKeys(issue, { deep: true }));
 export type IssueDecoder = z.TypeOf<typeof issueDecoder>;
 
-export const issuesDecoder = z
+export const issuesResponseDecoder = z
   .object({
-    viewer: z.object({
-      issues: z.object({
-        pageInfo: z.object({
-          startCursor: z.string(),
-          hasNextPage: z.boolean(),
-          endCursor: z.string(),
-        }),
-        totalCount: z.number(),
-        nodes: z.array(issueDecoder),
-      }),
-    }),
+    data: z.array(issueDecoder),
   })
-  .transform(({ viewer }) => viewer.issues);
-
-export type IssuesDecoder = z.TypeOf<typeof issuesDecoder>;
+  .transform(({ data }) => data);

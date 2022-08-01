@@ -1,73 +1,61 @@
 import { Octokit } from "octokit";
 
-import { issuesDecoder } from "@/lib/decoders/issue";
-
-export function repositories(octokit: Octokit) {
-  return octokit.graphql(`
-  {
-    viewer {
-      repositories(first: 100, affiliations: [OWNER, ORGANIZATION_MEMBER, COLLABORATOR], ownerAffiliations: [OWNER, ORGANIZATION_MEMBER, COLLABORATOR]) {
-        nodes {
-          name
-          url
-          isPrivate
-          owner {
-            login
-          }
-          defaultBranchRef {
-            name
-          }
-        }
-      }
-    }
-  }
-  `);
-}
+import { IssueType } from "@/lib/decoders/filter";
+import { issuesResponseDecoder } from "@/lib/decoders/issue";
+import { orgsResponseDecoder } from '@/lib/decoders/org';
+import { reposResponseDecoder } from "@/lib/decoders/repo";
 
 export function issues(octokit: Octokit) {
-  return (after?: string) =>
-    octokit
-      .graphql(
-        `
-    {
-    viewer {
-      issues(first: 100) {
-        pageInfo {
-          startCursor
-          hasNextPage
-          endCursor
-        }
-        totalCount
-        nodes {
-          url
-          titleHTML
-          bodyHTML
-          number
-          labels(first: 50) {
-            nodes {
-              url
-              color
-              name
-            }
-          }
-        }
-      }
-    }
-  }
-  `,
-        {}
-      )
-      .then(issuesDecoder.parse);
+  return (options?: { pagination?: number, filter: IssueType }) =>
+    octokit.rest.issues
+      .listForAuthenticatedUser({
+        per_page: 100,
+        orgs: true,
+        owned: true,
+        pulls: false,
+        collab: true,
+        state: "all",
+        filter: "created",
+        ...options,
+      })
+      .then(issuesResponseDecoder.parse);
 }
 
-function bootstrap(token: string) {
+export function orgIssues(octokit: Octokit) {
+  return (org: string, options?: { pagination?: number, filter: IssueType }) =>
+    octokit.rest.issues
+      .listForOrg({ org, per_page: 100, ...options })
+      .then(orgsResponseDecoder.parse);
+}
+
+export function orgs(octokit: Octokit) {
+  return () =>
+    octokit.rest.orgs
+      .listForAuthenticatedUser({
+        per_page: 100,
+      })
+      .then(orgsResponseDecoder.parse)
+}
+
+export function repos(octokit: Octokit) {
+  return () =>
+    octokit.rest.repos
+      .listForAuthenticatedUser({
+        per_page: 100,
+      })
+      .then(reposResponseDecoder.parse)
+}
+
+function bootstrap(auth: string) {
   const octokit = new Octokit({
-    auth: token,
+    auth,
   });
   return {
     octokit,
-    repositories: () => repositories(octokit),
     issues: issues(octokit),
+    orgIssues: orgIssues(octokit),
+    orgs: orgs(octokit),
+    repos: repos(octokit),
   };
 }
 

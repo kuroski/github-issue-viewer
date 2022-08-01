@@ -3,8 +3,9 @@ import type { NextPage } from "next";
 
 export type NextPageWithAuth = NextPage & {
   auth?:
-    | boolean
-    | {
-        can?: Role[];
-      };
+  | boolean
+  | {
+    can?: Role[];
+  };
 };
+
