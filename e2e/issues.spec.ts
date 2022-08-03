@@ -1,16 +1,30 @@
+// import { rest } from 'msw';
+import { SetupServerApi } from 'msw/lib/node';
+
 import Factories from '@/e2e/mocks/factories';
-import mockServer from "@/e2e/mocks/mockServer";
+import server from '@/e2e/mocks/server'
 import { expect, test } from "@/e2e/test";
 import { dateTimeFormat } from "@/lib/utils";
+
 
 const date = dateTimeFormat({ day: 'numeric', month: 'short', year: 'numeric' })
 
 test.describe("Github issues app", () => {
-  test.afterEach(() => mockServer.resetHandlers())
+  let mockServer: SetupServerApi
+  test.beforeAll(async () => {
+    mockServer = await server()
+  })
+  test.beforeEach(() => mockServer.resetHandlers())
 
   test("a user can see a list of issues", async ({
     page,
   }) => {
+    // mockServer?.use(
+    //   rest.get('https://api.github.com/user/issues', (_req, res, ctx) => res(
+    //     ctx.status(200),
+    //     ctx.json({ data: 'problem' })
+    //   ))
+    // )
     await page.goto(`/?state=all&type&visibility`);
 
     await Promise.all([
@@ -18,7 +32,7 @@ test.describe("Github issues app", () => {
       page.waitForResponse('**/api/trpc/github.issues.list*'),
     ])
 
-    for (const issue of Factories().issues) {
+    for (const issue of Factories.issues.current) {
       const issueRow = page.locator(`data-testid=issue-${issue.id}`)
 
       const issueTitle = issueRow.locator('h3', { hasText: issue.title })

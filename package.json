@@ -5,7 +5,6 @@
   "scripts": {
     "postinstall": "prisma generate",
     "dev": "next dev",
-    "dev:test": "esno ./e2e/mocks/server.ts",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
