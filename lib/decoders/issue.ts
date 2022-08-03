@@ -1,4 +1,6 @@
 import camelcaseKeys from "camelcase-keys";
+import { flow } from "fp-ts/lib/function";
+import * as S from 'fp-ts/string'
 import { z } from "zod";
 
 import { dateFrom, isISODate } from "@/lib/utils";
@@ -16,14 +18,16 @@ const userDecoder = z.object({
   gravatar_id: z.string(),
   url: z.string().url(),
   html_url: z.string().url(),
-})
-const userDecoderCamelized = userDecoder.transform((issue) => camelcaseKeys(issue, { deep: true }));
-export type User = z.TypeOf<typeof userDecoderCamelized>
+}).transform((u) => camelcaseKeys(u))
+export type User = z.TypeOf<typeof userDecoder>
 
 const isoDateDecoder = z
-  .string()
-  .refine(isISODate, { message: "Not a valid ISO string date " })
-  .transform(dateFrom);
+  .union([z.string(), z.number()])
+  .refine(flow(
+    (d) => S.isString(d) ? d : (new Date(d)).toISOString(),
+    isISODate
+  ), { message: "Not a valid ISO string date " })
+  .transform((d) => S.isString(d) ? dateFrom(d).getTime() : d);
 
 export const issueDecoder = z
   .object({

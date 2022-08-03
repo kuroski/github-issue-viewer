@@ -8,27 +8,26 @@ import { z } from 'zod';
 import { issuesResponseDecoder } from '@/lib/decoders/issue';
 import { orgsResponseDecoder } from '@/lib/decoders/org';
 import { reposResponseDecoder } from '@/lib/decoders/repo';
-import { dateFrom } from '@/lib/utils';
 
-function mockFor<T extends z.ZodTypeAny>(decoder: T): snakecaseKeys.SnakeCaseKeys<z.TypeOf<T>> {
+function mockFor<T extends z.ZodType>(decoder: T): z.TypeOf<T> {
+  const dateFn = () => (new Date()).toISOString()
   const options = {
     stringMap: {
-      created_at: () => dateFrom((new Date()).toISOString()).toString(),
-      closed_at: () => dateFrom((new Date()).toISOString()).toString(),
-      updated_at: () => dateFrom((new Date()).toISOString()).toString(),
+      created_at: dateFn,
+      closed_at: dateFn,
+      updated_at: dateFn,
     }
   }
   return generateMock(decoder.transform((d) => snakecaseKeys(d, { deep: true })), options)
 }
 
-function Factory<T extends z.ZodTypeAny>(filename: string, decoder: T): snakecaseKeys.SnakeCaseKeys<z.TypeOf<T>> {
+function Factory<T extends z.ZodType>(filename: string, decoder: T): z.TypeOf<T> {
   const filePath = `${__dirname}/_snapshots/${filename}`
   if (!fs.existsSync(filePath)) {
     fs.mkdirSync(path.dirname(filePath), { recursive: true })
 
     const content = mockFor(decoder)
     fs.writeFileSync(filePath, JSON.stringify({ data: content }), 'utf-8')
-    return content
   }
 
   return pipe(
@@ -42,7 +41,6 @@ function Factories() {
   const issues = Factory('issues.json', issuesResponseDecoder)
   const repos = Factory('repos.json', reposResponseDecoder)
   const orgs = Factory('orgs.json', orgsResponseDecoder)
-
   return {
     issues,
     repos,

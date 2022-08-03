@@ -61,17 +61,17 @@ const IssueRow = (props: IssueRowProps) => {
   const { t } = useTranslation('common')
   const [orgName, repoName] = props.issue.repository.fullName.split('/')
   return (
-    <Flex alignItems="center" gap="2">
+    <Flex alignItems="center" gap="2" data-testid={`issue-${props.issue.id}`}>
       <>
         {props.issue.state === "open" && (
           <Tooltip label={t('open_issue')} openDelay={500}>
-            <OpenIcon />
+            <OpenIcon data-testid="issue-open-icon" />
           </Tooltip>
         )}
         {props.issue.state === "closed" && (
           <Tooltip label={t('closed_issue')} openDelay={500}>
             <Box color="purple.500" alignSelf="flex-start">
-              <CheckCircledIcon width="24" height="24" />
+              <CheckCircledIcon data-testid="issue-closed-icon" width="24" height="24" />
             </Box>
           </Tooltip>
         )}
