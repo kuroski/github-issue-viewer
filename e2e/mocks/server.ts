@@ -6,7 +6,7 @@ import { parse } from "node:url";
 import bootstrapMockServer from '@/e2e/mocks/mockServer';
 
 const server = new Koa()
-const app = next({ dev: true })
+const app = next({ dev: process.env.CI ? false : true })
 const handle = app.getRequestHandler()
 const port = process.env.PORT || 3000;
 

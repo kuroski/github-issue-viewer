@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "playwright test",
+    "install:playwright": "playwright install --with-deps",
+    "test": "playwright test --reporter=line",
     "test:debug": "DEBUG=pw:api PWDEBUG=1 playwright test",
     "vercel-build": "prisma migrate deploy && next build"
   },
