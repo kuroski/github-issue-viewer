@@ -82,38 +82,42 @@ export type FactoryValue<Key extends keyof DB> = Omit<
 
 export const issuesHandler = () =>
   rest.get('https://api.github.com/user/issues', (_req, res, ctx) => {
+    if (db.issue.count() === 0) {
+      db.issue.create({
+        state: 'open',
+        repository: db.repository.create(),
+        pull_request: db.pullRequest.create(),
+        assignees: [...Array(3)].map(db.assignee.create),
+        labels: [],
+      })
+      db.issue.create({
+        state: 'open',
+        repository: db.repository.create(),
+        pull_request: null,
+        assignees: [],
+        labels: [],
+      })
+      db.issue.create({
+        state: 'closed',
+        closed_at: faker.date.recent().getTime(),
+        repository: db.repository.create(),
+        pull_request: db.pullRequest.create(),
+        assignees: [...Array(3)].map(db.assignee.create),
+        labels: [],
+      })
+      db.issue.create({
+        state: 'closed',
+        closed_at: faker.date.recent().getTime(),
+        repository: db.repository.create(),
+        pull_request: null,
+        assignees: [],
+        labels: [],
+      })
+    }
+
     return res(
       ctx.status(200),
-      ctx.json([
-        db.issue.create({
-          state: 'open',
-          repository: db.repository.create(),
-          pull_request: db.pullRequest.create(),
-          assignees: [...Array(3)].map(db.assignee.create),
-          labels: [],
-        }),
-        db.issue.create({
-          state: 'open',
-          repository: db.repository.create(),
-          pull_request: null,
-          assignees: [],
-          labels: [],
-        }),
-        db.issue.create({
-          state: 'closed',
-          repository: db.repository.create(),
-          pull_request: db.pullRequest.create(),
-          assignees: [...Array(3)].map(db.assignee.create),
-          labels: [],
-        }),
-        db.issue.create({
-          state: 'closed',
-          repository: db.repository.create(),
-          pull_request: null,
-          assignees: [],
-          labels: [],
-        }),
-      ])
+      ctx.json(db.issue.getAll())
     )
   })
 
