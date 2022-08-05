@@ -1,24 +1,27 @@
+import { drop } from '@mswjs/data';
+import { Page } from '@playwright/test';
+import { not } from 'fp-ts/lib/Predicate';
 import { SetupServerApi } from 'msw/lib/node';
 
+import { db, FactoryValue } from '@/e2e/mocks/handlers';
 import server from '@/e2e/mocks/server'
 import { expect, test } from "@/e2e/test";
 import { dateTimeFormat } from "@/lib/utils";
-
-import { db } from './mocks/handlers';
-
-
-const date = dateTimeFormat({ day: 'numeric', month: 'short', year: 'numeric' })
 
 test.describe("Github issues app", () => {
   let mockServer: SetupServerApi
   test.beforeAll(async () => {
     mockServer = await server()
   })
-  test.beforeEach(() => mockServer.resetHandlers())
+  test.beforeEach(() => {
+    mockServer.resetHandlers()
+  })
 
-  test("a user can see a list of issues", async ({
-    page,
-  }) => {
+  test.afterEach(() => drop(db))
+
+  const build = async (page: Page) => {
+    const date = dateTimeFormat({ day: 'numeric', month: 'short', year: 'numeric' })
+
     await page.goto(`/?state=all&type&visibility`);
 
     await Promise.all([
@@ -26,28 +29,113 @@ test.describe("Github issues app", () => {
       page.waitForResponse('**/api/trpc/github.issues.list*'),
     ])
 
-    for (const issue of db.issue.getAll()) {
-      const issueRow = page.locator(`data-testid=issue-${issue.id}`)
-
-      const issueTitle = issueRow.locator('h3', { hasText: issue.title })
-      await expect(issueTitle).toBeVisible()
-
-      if (issue.state !== "all") {
-        const icon = {
-          'open': 'issue-open-icon',
-          'closed': 'issue-closed-icon',
-        }[issue.state]
-        const issueState = issueRow.locator(`data-testid=${icon}`)
-        await expect(issueState).toBeVisible()
+    const openedIssues = db.issue.findMany({
+      where: {
+        state: {
+          equals: 'open'
+        }
       }
+    })
 
-      if (issue.state === "open" && issue.repository) {
-        const text = `${issue.repository.full_name} #${issue.number} opened on ${date.format(issue.created_at)} by ${issue.user.login}`
-        const issueText = issueRow.locator('p', { hasText: text })
-        await expect(issueText).toBeVisible()
+    const closedIssues = db.issue.findMany({
+      where: {
+        state: {
+          equals: 'closed'
+        }
+      }
+    })
+
+    return {
+      openedIssues,
+      closedIssues,
+      issuesResponse: () => page.waitForResponse('**/api/trpc/github.issues.list*'),
+      locators: {
+        openedIssuesCountButton: () => page.locator(`button:has-text("Open ${openedIssues.length}")`),
+        closedIssuesCountButton: () => page.locator(`button:has-text("Closed ${closedIssues.length}")`),
+        issue: (issue: FactoryValue<'issue'>) => {
+          const issueRow = page.locator(`data-testid=issue-${issue.id}`)
+          const icon = {
+            'open': 'issue-open-icon',
+            'closed': 'issue-closed-icon',
+          }[issue.state]
+          const subtitle = {
+            'open': `${issue.repository!.full_name} #${issue.number} opened on ${date.format(issue.created_at)} by ${issue.user.login}`,
+            'closed': `${issue.repository!.full_name} #${issue.number} by ${issue.user.login} was closed on ${date.format(issue.created_at)}`,
+          }[issue.state]
+
+          return {
+            title: () => issueRow.locator('h3', { hasText: issue.title }).locator(`a[href="${issue.html_url}"]`),
+            icon: () => issueRow.locator(`data-testid=${icon}`),
+            subtitle: () => issueRow.locator('p', { hasText: subtitle }),
+            prLink: () => issueRow.locator(`data-testid=issue-pull-request-${issue.id}`),
+            comments: () => issueRow.locator(`a[href="${issue.html_url}"]`, { hasText: String(issue.comments) }),
+            assignee: (assignee: FactoryValue<'assignee'>) => issueRow.locator(`a[href="${assignee.html_url}"]`).locator(`img[src="${assignee.avatar_url}"][alt~="${assignee.login}"]`),
+          }
+        }
       }
     }
+  }
 
-    await page.pause();
+  test("a user can see a list of issues", async ({ page }) => {
+    const {
+      openedIssues,
+      closedIssues,
+      locators
+    } = await build(page)
+
+    await expect(locators.openedIssuesCountButton()).toBeVisible()
+    await expect(locators.closedIssuesCountButton()).toBeVisible()
+
+    for (const issue of [...openedIssues, ...closedIssues]) {
+      const issueLocators = locators.issue(issue)
+      await expect(issueLocators.title()).toBeVisible()
+      await expect(issueLocators.icon()).toBeVisible()
+      await expect(issueLocators.subtitle()).toBeVisible()
+
+
+      if (issue.pull_request) {
+        await expect(issueLocators.prLink()).toBeVisible()
+      } else {
+        await expect(issueLocators.prLink()).not.toBeVisible()
+      }
+
+
+      if (issue.comments > 0) {
+        await expect(issueLocators.comments()).toBeVisible()
+      } else {
+        await expect(issueLocators.comments()).not.toBeVisible()
+      }
+
+      await Promise.all(
+        issue.assignees.map(
+          (assignee) => expect(issueLocators.assignee(assignee)).toBeVisible()
+        )
+      )
+    }
+  });
+
+  test("a user can filter issues", async ({ page }) => {
+    const {
+      openedIssues,
+      closedIssues,
+      issuesResponse,
+      locators
+    } = await build(page)
+
+    await locators.openedIssuesCountButton().click()
+    await issuesResponse()
+
+    await Promise.all([
+      ...openedIssues.map((issue) => expect(locators.issue(issue).title()).toBeVisible()),
+      ...closedIssues.map((issue) => expect(locators.issue(issue).title()).not.toBeVisible()),
+    ])
+
+    await locators.closedIssuesCountButton().click()
+    await issuesResponse()
+
+    await Promise.all([
+      ...openedIssues.map((issue) => expect(locators.issue(issue).title()).not.toBeVisible()),
+      ...closedIssues.map((issue) => expect(locators.issue(issue).title()).toBeVisible()),
+    ])
   });
 });

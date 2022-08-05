@@ -1,5 +1,6 @@
 import { faker } from '@faker-js/faker';
-import { factory, manyOf, nullable, oneOf, primaryKey } from '@mswjs/data'
+import { factory, manyOf, nullable, oneOf, primaryKey } from '@mswjs/data';
+import type { ENTITY_TYPE, PRIMARY_KEY } from "@mswjs/data/lib/glossary";
 import { rest } from 'msw';
 
 export const db = factory({
@@ -30,7 +31,7 @@ export const db = factory({
     description: nullable(faker.hacker.phrase),
     html_url: faker.internet.url,
     private: faker.datatype.boolean,
-    visibility: nullable(() => faker.helpers.arrayElement(['all', 'public', 'private'])),
+    visibility: nullable(() => faker.helpers.arrayElement<'all' | 'public' | 'private'>(['all', 'public', 'private'])),
   },
   issue: {
     number: faker.datatype.number,
@@ -38,7 +39,7 @@ export const db = factory({
     html_url: faker.internet.url,
     url: faker.internet.url,
     repository_url: faker.internet.url,
-    state: () => faker.helpers.arrayElement(["open", "closed"]),
+    state: () => faker.helpers.arrayElement<'open' | 'closed'>(["open", "closed"]),
     title: faker.random.words,
     body: nullable(faker.hacker.phrase),
     user: {
@@ -72,60 +73,59 @@ export const db = factory({
     avatar_url: faker.internet.avatar,
   }
 })
+type DB = typeof db;
+
+export type FactoryValue<Key extends keyof DB> = Omit<
+  ReturnType<DB[Key]['create']>,
+  typeof ENTITY_TYPE | typeof PRIMARY_KEY
+>;
 
 export const issuesHandler = () =>
-  rest.get('https://api.github.com/user/issues', (_req, res, ctx) => res(
-    ctx.status(200),
-    ctx.json([
-      db.issue.create({
-        repository: db.repository.create(),
-        labels: [db.label.create(), db.label.create(), db.label.create(), db.label.create()],
-        assignees: [db.assignee.create()],
-      }),
-      db.issue.create({
-        repository: db.repository.create(),
-        labels: [db.label.create(), db.label.create(), db.label.create(), db.label.create()],
-        assignees: [db.assignee.create()],
-      }),
-      db.issue.create({
-        repository: db.repository.create(),
-        labels: [db.label.create(), db.label.create(), db.label.create(), db.label.create()],
-        assignees: [db.assignee.create()],
-      }),
-      db.issue.create({
-        repository: db.repository.create(),
-        labels: [db.label.create(), db.label.create(), db.label.create(), db.label.create()],
-        assignees: [db.assignee.create()],
-      }),
-      db.issue.create({
-        repository: db.repository.create(),
-        labels: [db.label.create(), db.label.create(), db.label.create(), db.label.create()],
-        assignees: [db.assignee.create()],
-      }),
-    ])
-  ))
+  rest.get('https://api.github.com/user/issues', (_req, res, ctx) => {
+    return res(
+      ctx.status(200),
+      ctx.json([
+        db.issue.create({
+          state: 'open',
+          repository: db.repository.create(),
+          pull_request: db.pullRequest.create(),
+          assignees: [...Array(3)].map(db.assignee.create),
+          labels: [],
+        }),
+        db.issue.create({
+          state: 'open',
+          repository: db.repository.create(),
+          pull_request: null,
+          assignees: [],
+          labels: [],
+        }),
+        db.issue.create({
+          state: 'closed',
+          repository: db.repository.create(),
+          pull_request: db.pullRequest.create(),
+          assignees: [...Array(3)].map(db.assignee.create),
+          labels: [],
+        }),
+        db.issue.create({
+          state: 'closed',
+          repository: db.repository.create(),
+          pull_request: null,
+          assignees: [],
+          labels: [],
+        }),
+      ])
+    )
+  })
 
 const handlers = [
   issuesHandler(),
   rest.get('https://api.github.com/user/orgs', (_req, res, ctx) => res(
     ctx.status(200),
-    ctx.json([
-      db.org.create(),
-      db.org.create(),
-      db.org.create(),
-      db.org.create(),
-      db.org.create()
-    ])
+    ctx.json([...Array(5)].map(db.org.create))
   )),
   rest.get('https://api.github.com/user/repos', (_req, res, ctx) => res(
     ctx.status(200),
-    ctx.json([
-      db.repo.create(),
-      db.repo.create(),
-      db.repo.create(),
-      db.repo.create(),
-      db.repo.create()
-    ])
+    ctx.json([...Array(5)].map(db.repo.create))
   )),
 ]
 

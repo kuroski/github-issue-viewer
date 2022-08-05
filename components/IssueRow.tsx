@@ -79,33 +79,43 @@ const IssueRow = (props: IssueRowProps) => {
 
         <Flex flex="1" direction="column" gap="1">
           <Heading as="h3" size="sm">
-            <NextLink href={{ pathname: "/issues/[org]/[repo]/[id]", query: { org: orgName, repo: repoName, id: props.issue.number } }} passHref>
-              <Link _hover={{ color: "blue.500" }}>{props.issue.title}</Link>
-            </NextLink>
+            <Link href={props.issue.htmlUrl} _hover={{ color: "blue.500" }}>{props.issue.title}</Link>
           </Heading>
           <IssueSubtitle {...props.issue} />
         </Flex>
 
         <Flex alignSelf="flex-start" alignItems="center" gap="6">
           {props.issue.pullRequest && (
-            <Link href={props.issue.pullRequest.htmlUrl} target="_blank" _hover={{ color: "blue.500" }} display="flex" alignItems="center" gap="1">
+            <Link
+              href={props.issue.pullRequest.htmlUrl}
+              target="_blank"
+              _hover={{ color: "blue.500" }}
+              display="flex"
+              alignItems="center"
+              gap="1"
+              data-testid={`issue-pull-request-${props.issue.id}`}
+            >
               <CommitIcon />
             </Link>
           )}
           {props.issue.assignees && (
-            <AvatarGroup size='xs' max={3}>
+            <AvatarGroup size='xs' max={3} data-testid={`issue-assignees-${props.issue.id}`}>
               {props.issue.assignees.map((assignee) => (
                 <TooltipAvatar key={assignee.id} name={t('assigned_to', { user: assignee.login })} as={Link} src={assignee.avatarUrl} href={assignee.htmlUrl} target="_blank" />
               ))}
             </AvatarGroup>
           )}
           {props.issue.comments > 0 && (
-            <NextLink href={{ pathname: "/issues/[id]", query: { id: props.issue.number } }} passHref>
-              <Link _hover={{ color: "blue.500" }} display="flex" alignItems="center" gap="1">
-                <ChatBubbleIcon />
-                {props.issue.comments}
-              </Link>
-            </NextLink>
+            <Link
+              href={props.issue.htmlUrl}
+              _hover={{ color: "blue.500" }}
+              display="flex"
+              alignItems="center"
+              gap="1"
+            >
+              <ChatBubbleIcon />
+              {props.issue.comments}
+            </Link>
           )}
         </Flex>
       </>
