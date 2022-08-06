@@ -16,9 +16,25 @@ services:
     networks:
       - mysql
 
+  db-pg:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: secret
+    volumes:
+      - postgres:/data/postgres
+    ports:
+      - "5432:5432"
+    networks:
+      - postgres
+
 networks:
   mysql:
     driver: bridge
+  postgres:
+    driver: bridge
 
 volumes:
+  postgres:
+  pgadmin:
   mysql:

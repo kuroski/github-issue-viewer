@@ -6,7 +6,7 @@ on:
       - main
 
 env:
-  DATABASE_URL: mysql://root:secret@127.0.0.1:3306/githubIssueViewer
+  DATABASE_URL: postgresql://postgres:postgres@localhost:5432/githubIssueViewer
   GITHUB_ID: "123"
   GITHUB_SECRET: "123"
   PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1 # Skip downloading during yarn install
@@ -16,16 +16,26 @@ jobs:
   playwright:
     name: "Playwright Tests"
     runs-on: ubuntu-latest
+    # Service containers to run with `container-job`
+    services:
+      # Label used to access the service container
+      postgres:
+        # Docker Hub image
+        image: postgres
+        # Provide the password for postgres
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          # Maps TCP port 5432 on service container to the host
+          - 5432:5432
     steps:
       - uses: actions/checkout@v3
-
-      - name: Set up MySQL
-        uses: mirromutth/mysql-action@v1.1
-        with:
-          mysql database: githubIssueViewer
-          mysql user: root
-          mysql root password: secret
-          mysql password: secret
 
       - uses: actions/setup-node@v3
         with:
