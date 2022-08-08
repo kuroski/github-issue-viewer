@@ -58,7 +58,7 @@ test.describe("Github issues app", () => {
           }[issue.state]
           const subtitle = {
             'open': `${issue.repository!.full_name} #${issue.number} opened on ${date.format(issue.created_at)} by ${issue.user.login}`,
-            'closed': `${issue.repository!.full_name} #${issue.number} by ${issue.user.login} was closed on ${date.format(issue.created_at)}`,
+            'closed': `${issue.repository!.full_name} #${issue.number} by ${issue.user.login} was closed on ${date.format(issue.closed_at)}`,
           }[issue.state]
 
           return {
@@ -88,7 +88,7 @@ test.describe("Github issues app", () => {
       const issueLocators = locators.issue(issue)
       await expect(issueLocators.title()).toBeVisible()
       await expect(issueLocators.icon()).toBeVisible()
-      // await expect(issueLocators.subtitle()).toBeVisible()
+      await expect(issueLocators.subtitle()).toBeVisible()
 
 
       if (issue.pull_request) {
@@ -104,11 +104,9 @@ test.describe("Github issues app", () => {
         await expect(issueLocators.comments()).not.toBeVisible()
       }
 
-      // await Promise.all(
-      //   issue.assignees.map(
-      //     (assignee) => expect(issueLocators.assignee(assignee)).toBeVisible()
-      //   )
-      // )
+      for (const assignee of issue.assignees) {
+        await expect(issueLocators.assignee(assignee)).toBeVisible()
+      }
     }
   });
 
