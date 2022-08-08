@@ -1,5 +1,6 @@
 import Koa from "koa"
 import { SetupServerApi } from "msw/lib/node";
+import { AddressInfo } from 'net';
 import next from "next";
 import { parse } from "node:url";
 
@@ -8,9 +9,8 @@ import bootstrapMockServer from '@/e2e/mocks/mockServer';
 const server = new Koa()
 const app = next({ dev: process.env.CI ? false : true })
 const handle = app.getRequestHandler()
-const port = process.env.PORT || 3000;
 
-async function bootstrap(): Promise<SetupServerApi> {
+async function bootstrap(): Promise<{ mockServer: SetupServerApi, baseURL: string }> {
   return new Promise(async (resolve) => {
     try {
       await app.prepare()
@@ -20,10 +20,14 @@ async function bootstrap(): Promise<SetupServerApi> {
         const parsedUrl = parse(ctx.req.url!, true);
         return handle(ctx.req, ctx.res, parsedUrl)
       });
-      server.listen(port, (err?: any) => {
-        if (err) throw err;
+      const s = server.listen(0)
+      s.on('listening', () => {
+        const port = (<AddressInfo>s.address()).port
         console.log(`> Ready on localhost:${port} - env ${process.env.NODE_ENV}`);
-        resolve(mockServer)
+        resolve({
+          mockServer,
+          baseURL: `http://localhost:${port}`
+        })
       });
     } catch (e) {
       console.error(e);

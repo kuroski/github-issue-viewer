@@ -8,20 +8,20 @@ import { expect, test } from "@/e2e/test";
 import { dateTimeFormat } from "@/lib/utils";
 
 test.describe("Github issues app", () => {
-  let mockServer: SetupServerApi
+  let props: { mockServer: SetupServerApi, baseURL: string }
   test.beforeAll(async () => {
-    mockServer = await server()
+    props = await server()
   })
 
   test.afterEach(() => {
-    mockServer.resetHandlers()
+    props.mockServer.resetHandlers()
     drop(db)
   })
 
   const build = async (page: Page) => {
     const date = dateTimeFormat({ day: 'numeric', month: 'short', year: 'numeric' })
 
-    await page.goto(`/?state=all&type&visibility`);
+    await page.goto(`${props.baseURL}/?state=all&type&visibility`);
 
     await Promise.all([
       page.waitForResponse('**/api/trpc/github.issues.list*'),
@@ -58,7 +58,7 @@ test.describe("Github issues app", () => {
           }[issue.state]
           const subtitle = {
             'open': `${issue.repository!.full_name} #${issue.number} opened on ${date.format(issue.created_at)} by ${issue.user.login}`,
-            'closed': `${issue.repository!.full_name} #${issue.number} by ${issue.user.login} was closed on ${date.format(issue.closed_at)}`,
+            'closed': `${issue.repository!.full_name} #${issue.number} by ${issue.user.login} was closed on ${date.format(issue.closed_at || issue.created_at)}`,
           }[issue.state]
 
           return {
